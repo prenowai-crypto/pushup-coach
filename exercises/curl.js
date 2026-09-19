@@ -1,120 +1,66 @@
-// CURL V5 — compatibile con il contratto REALE di Core V1.1/V1.2.
-// Il Bridge passa UniversalBiomechanics.frame, NON UniversalBody.frame.
-// Quindi il landmark 2D grezzo NON è disponibile qui.
-// Per il counter usiamo gli angoli gomito già presenti in frame.angles.
-// Tecnica/relazioni restano separate dal conteggio.
+// CURL V6 — port diretto del counter 2D della V11.1 monolitica.
+// Core V1.3 passa esplicitamente frame.image: i landmark MediaPipe originali.
+// Il counter usa SOLO l'angolo 2D spalla-gomito-polso.
+// Relazioni biomeccaniche restano disponibili per il validator tecnico successivo.
 
-const CFG=Object.freeze({
-  EMA:.48,
-  READY:150,
-  START:138,
-  TOP:75,
-  TOP_EXIT:90,
-  READY_FRAMES:2,
-  TOP_FRAMES:2,
-  RETURN_FRAMES:2,
-  MIN_REP_MS:450,
-  MAX_REP_MS:8000
-});
+const CFG={VIS:.48,EMA:.48,EXTENDED:150,START_CURL:138,TOP:62,TOP_FRAMES:2,EXT_FRAMES:2,MIN_REP:600,MAX_REP:7000};
 
-const fresh=()=>({
-  phase:"GET_READY",reps:0,sm:null,
-  readyN:0,topN:0,returnN:0,start:0,
-  min:180,max:0
-});
-const arm={left:fresh(),right:fresh()};
-
-function rawAngle(frame,side){
-  const v=frame?.angles?.[side==="left"?"leftElbow":"rightElbow"];
-  return Number.isFinite(v)?v:null;
+function angle2D(a,b,c){
+  const ab=Math.atan2(a.y-b.y,a.x-b.x),cb=Math.atan2(c.y-b.y,c.x-b.x);
+  let d=Math.abs((ab-cb)*180/Math.PI);return d>180?360-d:d;
 }
+function ema(old,v,a){return old==null?v:old*a+v*(1-a)}
+function newArm(name,sh,el,wr){return{name,sh,el,wr,state:"GET_READY",smooth:null,topFrames:0,extFrames:0,repStart:0,reps:0,lastRepMs:0,lastRaw:null,lastVis:0}}
+let arms={left:newArm("SX",11,13,15),right:newArm("DX",12,14,16)};
+function resetArms(){arms={left:newArm("SX",11,13,15),right:newArm("DX",12,14,16)}}
 
-function step(frame,side,now){
-  const s=arm[side],raw=rawAngle(frame,side);
-  if(!Number.isFinite(raw)) return null;
+function analyzeArm(lm,a){
+  if(!lm?.length)return {ok:false,reason:"NO IMAGE LANDMARKS",arm:a};
+  const sh=lm[a.sh],el=lm[a.el],wr=lm[a.wr];
+  const vis=Math.min(sh?.visibility??0,el?.visibility??0,wr?.visibility??0);
+  a.lastVis=vis;
+  if(!sh||!el||!wr)return {ok:false,reason:"LANDMARK MANCANTI",arm:a};
+  if(vis<CFG.VIS)return {ok:false,reason:`VIS ${Math.round(vis*100)}%`,arm:a};
 
-  s.sm=s.sm==null?raw:CFG.EMA*raw+(1-CFG.EMA)*s.sm;
-  const a=s.sm;
+  const raw=angle2D(sh,el,wr);a.lastRaw=raw;a.smooth=ema(a.smooth,raw,CFG.EMA);
+  const ang=a.smooth,now=performance.now();let repEvent=false;
 
-  if(s.phase==="GET_READY"){
-    s.readyN=a>=CFG.READY?s.readyN+1:0;
-    if(s.readyN>=CFG.READY_FRAMES)s.phase="READY";
-    return null;
-  }
-
-  if(s.phase==="READY"){
-    if(a<CFG.START){
-      s.phase="UP";s.start=now;s.min=a;s.max=a;s.topN=0;
-    }
-    return null;
-  }
-
-  s.min=Math.min(s.min,a);s.max=Math.max(s.max,a);
-  if(now-s.start>CFG.MAX_REP_MS){
-    s.phase="GET_READY";s.readyN=s.topN=s.returnN=0;s.start=0;
-    return null;
-  }
-
-  if(s.phase==="UP"){
-    s.topN=a<=CFG.TOP?s.topN+1:0;
-    if(s.topN>=CFG.TOP_FRAMES)s.phase="TOP";
-    return null;
-  }
-
-  if(s.phase==="TOP"){
-    if(a>=CFG.TOP_EXIT){s.phase="DOWN";s.returnN=0}
-    return null;
-  }
-
-  if(s.phase==="DOWN"){
-    s.returnN=a>=CFG.READY?s.returnN+1:0;
-    if(s.returnN>=CFG.RETURN_FRAMES){
-      const duration=now-s.start;
-      if(duration>=CFG.MIN_REP_MS&&duration<=CFG.MAX_REP_MS){
-        s.reps++;
-        const ev={type:"rep",side,sideReps:s.reps,total:arm.left.reps+arm.right.reps,
-                  duration,minAngle:s.min,maxAngle:s.max};
-        s.phase="READY";s.readyN=CFG.READY_FRAMES;s.topN=s.returnN=0;
-        s.start=0;s.min=180;s.max=0;
-        return ev;
+  if(a.state==="GET_READY"){
+    if(ang>CFG.EXTENDED){if(++a.extFrames>=3){a.state="READY";a.extFrames=0}}else a.extFrames=0;
+  }else if(a.state==="READY"){
+    if(ang<CFG.START_CURL){a.repStart=now;a.topFrames=0;a.state="CURL_UP"}
+  }else if(a.state==="CURL_UP"){
+    if(ang<CFG.TOP){if(++a.topFrames>=CFG.TOP_FRAMES){a.state="TOP";a.topFrames=0}}else a.topFrames=0;
+    if(now-a.repStart>CFG.MAX_REP){a.state="GET_READY";a.repStart=0}
+  }else if(a.state==="TOP"){
+    if(ang>CFG.TOP+15)a.state="LOWER";
+  }else if(a.state==="LOWER"){
+    if(ang>CFG.EXTENDED){
+      if(++a.extFrames>=CFG.EXT_FRAMES){
+        const ms=now-a.repStart;
+        if(ms>=CFG.MIN_REP&&ms<=CFG.MAX_REP){a.reps++;a.lastRepMs=ms;repEvent=true}
+        a.state="READY";a.extFrames=0;a.repStart=0;
       }
-      s.phase="GET_READY";s.readyN=s.topN=s.returnN=0;s.start=0;
-    }
+    }else a.extFrames=0;
   }
-  return null;
+  return {ok:true,arm:a,ang,raw,vis,repEvent};
 }
 
 const CurlExercise={
-  id:"curl",
-  name:"Curl",
-
-  reset(){
-    Object.assign(arm.left,fresh());
-    Object.assign(arm.right,fresh());
-  },
-
+  id:"curl",name:"Curl",
+  reset(){resetArms()},
   analyze(frame){
-    const now=performance.now();
-    const le=step(frame,"left",now);
-    const re=step(frame,"right",now);
-    const ev=le||re;
-
-    if(ev){
-      window.dispatchEvent(new CustomEvent("exercise-rep",{
-        detail:{exercise:"curl",...ev}
-      }));
-    }
-
-    return {
-      phase:`SX ${arm.left.phase} · DX ${arm.right.phase}`,
-      reps:arm.left.reps+arm.right.reps,
-      leftReps:arm.left.reps,
-      rightReps:arm.right.reps,
-      leftAngle:arm.left.sm??rawAngle(frame,"left"),
-      rightAngle:arm.right.sm??rawAngle(frame,"right"),
-      event:ev
+    const lm=frame?.image;
+    const L=analyzeArm(lm,arms.left),R=analyzeArm(lm,arms.right);
+    const total=arms.left.reps+arms.right.reps;
+    for(const x of [L,R])if(x.repEvent)window.dispatchEvent(new CustomEvent("exercise-rep",{detail:{exercise:"curl",side:x.arm.name,total,sideReps:x.arm.reps,duration:x.arm.lastRepMs}}));
+    const fmt=x=>x.ok?`${Math.round(x.ang)}°`:`${x.reason}`;
+    return{
+      phase:`SX ${arms.left.state.replace("_"," ")} · DX ${arms.right.state.replace("_"," ")}`,
+      reps:total,leftReps:arms.left.reps,rightReps:arms.right.reps,
+      leftAngle:L.ok?L.ang:null,rightAngle:R.ok?R.ang:null,
+      debug:`CURL V6 2D | SX ${fmt(L)} raw=${Number.isFinite(arms.left.lastRaw)?Math.round(arms.left.lastRaw):"--"} vis=${Math.round(arms.left.lastVis*100)}% ${arms.left.state} rep=${arms.left.reps} | DX ${fmt(R)} raw=${Number.isFinite(arms.right.lastRaw)?Math.round(arms.right.lastRaw):"--"} vis=${Math.round(arms.right.lastVis*100)}% ${arms.right.state} rep=${arms.right.reps}`
     };
   }
 };
-
 window.CurlExercise=CurlExercise;
