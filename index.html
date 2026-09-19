@@ -1,4 +1,4 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V10R.4 Debug Timeline</title>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V11 Universal Biomechanics</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}.recap{display:none;margin-top:12px;background:#151a21;border:1px solid #303947;border-radius:16px;padding:14px}
 .recap.show{display:block}.recap h2{margin:0 0 10px;font-size:16px}.recapTop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .recapBox{background:#10151b;border-radius:11px;padding:10px;text-align:center}.recapBox b{display:block;font-size:20px}.recapBox span{font-size:9px;color:#8e99a8}
@@ -9,7 +9,7 @@
 color:#fff;padding:9px 11px;border-radius:10px;font:700 13px/1.45 system-ui;pointer-events:none;
 backdrop-filter:blur(4px);min-width:190px}
 #relTelemetry .l{color:#62e6a7} #relTelemetry .r{color:#ffd166}
-</style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V10R.4 · Debug Timeline</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div id="relTelemetry">
+</style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V11 · Universal Biomechanics</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div id="relTelemetry">
 <div style="margin-bottom:5px">RELATIONSHIP DEBUG</div>
 <select id="relSelect" style="font:inherit;max-width:180px;margin-bottom:5px">
 <option value="handHip">Mano → bacino</option>
@@ -157,6 +157,66 @@ const BodyTracker={
  }
 };
 
+
+// === V11 UNIVERSAL BIOMECHANICS LAYER =================================
+// First integration pass: universal measurements independent of exercise.
+// Keeps V10R.4 behavior intact and adds normalized kinematics/confidence.
+const BioMath={
+ clamp:(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),
+ finite:x=>Number.isFinite(x),
+ mean:a=>{a=a.filter(Number.isFinite);return a.length?a.reduce((s,x)=>s+x,0)/a.length:NaN},
+ vis:p=>p?.visibility??0,
+};
+const UniversalBiomechanics={
+ previous:null, frame:null, history:[], maxHistory:180,
+ build(body){
+  if(!body?.points)return null;
+  const P=body.points,A=body.angles,R=body.relations,S=body.scales,t=body.time;
+  const dt=this.previous?Math.max(.001,(t-this.previous.time)/1000):NaN;
+  const velocity={};
+  for(const n of Object.keys(P)){
+   const p=P[n],q=this.previous?.points?.[n];
+   if(p&&q&&Number.isFinite(dt))velocity[n]={x:(p.x-q.x)/dt,y:(p.y-q.y)/dt,z:((p.z||0)-(q.z||0))/dt,speed:Math.hypot(p.x-q.x,p.y-q.y,(p.z||0)-(q.z||0))/dt};
+  }
+  const confPair=(a,b)=>Math.min(BioMath.vis(P[a]),BioMath.vis(P[b]));
+  const confidence={
+   leftArm:Math.min(BioMath.vis(P.leftShoulder),BioMath.vis(P.leftElbow),BioMath.vis(P.leftWrist)),
+   rightArm:Math.min(BioMath.vis(P.rightShoulder),BioMath.vis(P.rightElbow),BioMath.vis(P.rightWrist)),
+   leftLeg:Math.min(BioMath.vis(P.leftHip),BioMath.vis(P.leftKnee),BioMath.vis(P.leftAnkle),BioMath.vis(P.leftFoot)),
+   rightLeg:Math.min(BioMath.vis(P.rightHip),BioMath.vis(P.rightKnee),BioMath.vis(P.rightAnkle),BioMath.vis(P.rightFoot)),
+   torso:Math.min(BioMath.vis(P.leftShoulder),BioMath.vis(P.rightShoulder),BioMath.vis(P.leftHip),BioMath.vis(P.rightHip))
+  };
+  const relConf={
+   leftHandToHip:confPair("leftWrist","leftHip"),rightHandToHip:confPair("rightWrist","rightHip"),
+   leftElbowToTorso:Math.min(confidence.leftArm,confidence.torso),rightElbowToTorso:Math.min(confidence.rightArm,confidence.torso),
+   handDistance:Math.min(confidence.leftArm,confidence.rightArm),footDistance:Math.min(confidence.leftLeg,confidence.rightLeg)
+  };
+  const orientation={
+   shoulderTilt:Math.atan2(P.rightShoulder.y-P.leftShoulder.y,P.rightShoulder.x-P.leftShoulder.x)*180/Math.PI,
+   hipTilt:Math.atan2(P.rightHip.y-P.leftHip.y,P.rightHip.x-P.leftHip.x)*180/Math.PI,
+   torsoVector:{x:P.shoulderCenter.x-P.hipCenter.x,y:P.shoulderCenter.y-P.hipCenter.y,z:(P.shoulderCenter.z||0)-(P.hipCenter.z||0)}
+  };
+  orientation.torsoLean2D=Math.atan2(orientation.torsoVector.x,-orientation.torsoVector.y)*180/Math.PI;
+  const symmetry={
+   elbowAngle:Math.abs(A.leftElbow-A.rightElbow),shoulderAngle:Math.abs(A.leftShoulder-A.rightShoulder),
+   hipAngle:Math.abs(A.leftHip-A.rightHip),kneeAngle:Math.abs(A.leftKnee-A.rightKnee),
+   handHip:Math.abs(R.leftHandToHip-R.rightHandToHip),elbowTorso:Math.abs(R.leftElbowToTorso-R.rightElbowToTorso)
+  };
+  const status=c=>c>=.75?"MEASURED":c>=.45?"ESTIMATED":"UNAVAILABLE";
+  const quality={};
+  for(const [k,c] of Object.entries(relConf))quality[k]={confidence:c,status:status(c),source:body.source};
+  const f={time:t,source:body.source,points:P,angles:A,relations:R,scales:S,velocity,confidence,relationConfidence:relConf,orientation,symmetry,quality};
+  this.previous=body;this.frame=f;this.history.push(f);if(this.history.length>this.maxHistory)this.history.shift();return f;
+ },
+ metric(name){return this.frame?.relations?.[name]},
+ getHistory(seconds=5){const now=this.frame?.time||0;return this.history.filter(x=>now-x.time<=seconds*1000)},
+ range(path,seconds=5){
+   const rows=this.getHistory(seconds),vals=rows.map(x=>path.split(".").reduce((o,k)=>o?.[k],x)).filter(Number.isFinite);
+   return vals.length?{min:Math.min(...vals),max:Math.max(...vals),rom:Math.max(...vals)-Math.min(...vals),mean:BioMath.mean(vals)}:null;
+ }
+};
+window.getBiomechanics=()=>UniversalBiomechanics.frame;
+window.getBiomechanicsHistory=(seconds=5)=>UniversalBiomechanics.getHistory(seconds);
 // V10R: Universal Body + Relationship Engine.
 // Independent from the selected exercise; tracks both sides permanently.
 const UB_INDEX={nose:0,leftShoulder:11,rightShoulder:12,leftElbow:13,rightElbow:14,leftWrist:15,rightWrist:16,leftHip:23,rightHip:24,leftKnee:25,rightKnee:26,leftAnkle:27,rightAnkle:28,leftHeel:29,rightHeel:30,leftFoot:31,rightFoot:32};
@@ -694,6 +754,7 @@ function loop(){if(!running)return;if(video.readyState>=2&&video.currentTime!==l
     lastHandRun=now;lastHands=handLandmarker.detectForVideo(video,now);
   }else if(!ExerciseEngine.current?.trackers?.includes("hands"))lastHands=null;
   const bodyFrame=BodyTracker.update(r,lastHands);UniversalBody.update(r,lastHands);
+UniversalBiomechanics.build(UniversalBody.frame);
 const _rr=UniversalBody.frame?.relations,_rv=document.getElementById("relValues"),_rs=document.getElementById("relSelect");
 if(_rr&&_rv&&_rs){
  let L=NaN,R=NaN,label="";
@@ -810,6 +871,16 @@ const DebugSession={
   <div><b>Distanza piedi:</b> ${f(F)} × anche</div>
   <div><b>Differenza angolo gomiti:</b> ${f(E)}°</div>
   <div><b>Differenza angolo ginocchia:</b> ${f(K)}°</div>
+  ${(()=>{const b=UniversalBiomechanics.frame;if(!b)return "";
+    const pc=x=>Number.isFinite(x)?Math.round(x*100)+"%":"--";
+    return `<hr style="opacity:.2;margin:16px 0"><h3>Biomechanics snapshot</h3>
+    <div><b>Confidence braccio SX/DX:</b> ${pc(b.confidence.leftArm)} / ${pc(b.confidence.rightArm)}</div>
+    <div><b>Confidence gamba SX/DX:</b> ${pc(b.confidence.leftLeg)} / ${pc(b.confidence.rightLeg)}</div>
+    <div><b>Confidence torso:</b> ${pc(b.confidence.torso)}</div>
+    <div><b>Inclinazione torso 2D:</b> ${Number.isFinite(b.orientation.torsoLean2D)?b.orientation.torsoLean2D.toFixed(1)+"°":"--"}</div>
+    <div><b>Tilt spalle / bacino:</b> ${b.orientation.shoulderTilt.toFixed(1)}° / ${b.orientation.hipTilt.toFixed(1)}°</div>
+    <div><b>Asimmetria mano-bacino:</b> ${Number.isFinite(b.symmetry.handHip)?b.symmetry.handHip.toFixed(3):"--"}</div>
+    <div><b>Qualità mano→bacino SX/DX:</b> ${b.quality.leftHandToHip?.status||"--"} / ${b.quality.rightHandToHip?.status||"--"}</div>`})()}
   <p style="opacity:.75">Per validare il tracker guarda soprattutto se SX/DX e min/max corrispondono ai movimenti che hai eseguito.</p>`;
  }
 };
