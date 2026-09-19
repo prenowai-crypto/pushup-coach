@@ -1,131 +1,126 @@
-// Curl V1 — modulo esterno per Core V1.1 ExerciseBridge
-// Obiettivo: SOLO conteggio affidabile SX/DX. Nessuna correzione tecnica avanzata.
+// Curl V2 — counter multi-segnale, indipendente SX/DX.
+// Core/index invariati. Obiettivo: conteggio robusto frontale / 3-4 / laterale.
 
-const CFG = Object.freeze({
-  minConfidence: 0.60,
-  readyAngle: 150,
-  startAngle: 138,
-  topAngle: 78,
-  leaveTopAngle: 92,
-  readyFrames: 5,
-  topFrames: 3,
-  returnFrames: 4,
-  minRepMs: 800,
-  maxRepMs: 8000,
-  minROM: 65,
-  maxGapMs: 280,
-  maxAngleJump: 26
+const CFG=Object.freeze({
+  minArmConfidence:.52, minTorsoConfidence:.45,
+  readyAngle:142, startAngle:132, topAngle:92, deepTopAngle:78,
+  readyHandHipMax:.78, topHandHipMin:.72,
+  readyWristShoulderMin:.62, topWristShoulderMax:.62,
+  readyFrames:4, topFrames:2, returnFrames:3,
+  minRepMs:650, maxRepMs:7000, minRom:48,
+  maxGapMs:420, maxAngleJump:42, smooth:.48
 });
 
-const sideState = () => ({
-  phase:"WAIT_READY", ready:0, top:0, returned:0,
-  startedAt:0, minAngle:180, maxAngle:0,
-  lastAngle:null, lastTs:0, reps:0, reason:""
-});
-const S={left:sideState(),right:sideState()};
+const fresh=()=>({phase:"WAIT_READY",ready:0,top:0,ret:0,reps:0,start:0,
+ minA:180,maxA:0,lastRaw:null,lastTs:0,a:null,reason:""});
+const S={left:fresh(),right:fresh()};
 
-function num(v){ return Number.isFinite(v) ? v : null; }
-function pick(obj,...paths){
-  for(const p of paths){
-    let v=obj;
-    for(const k of p.split(".")) v=v?.[k];
-    if(Number.isFinite(v)) return v;
-  }
-  return null;
+const finite=v=>Number.isFinite(v);
+function val(o,...paths){
+ for(const path of paths){let v=o;for(const k of path.split("."))v=v?.[k];if(finite(v))return v}
+ return null;
 }
-function angle(frame,side){
-  return pick(frame,
-    `angles.${side}Elbow`,
-    `angles.${side}.elbow`,
-    `jointAngles.${side}.elbow`,
-    `${side}.elbowAngle`
-  );
+function M(f,s){
+ const cap=s[0].toUpperCase()+s.slice(1);
+ return {
+  a:val(f,`angles.${s}Elbow`),
+  conf:val(f,`confidence.${s}Arm`,`confidence.arm.${s}`)??0,
+  torso:val(f,"confidence.torso")??0,
+  hh:val(f,`relations.${s}HandToHip`),
+  ws:val(f,`relations.${s}WristToShoulder`),
+  et:val(f,`relations.${s}ElbowToTorso`)
+ };
 }
-function confidence(frame,side){
-  return pick(frame,
-    `confidence.arm.${side}`,
-    `confidence.arms.${side}`,
-    `confidence.${side}Arm`,
-    `confidence.arm${side==="left"?"Left":"Right"}`
-  ) ?? 1;
+function resetSide(st,why="",keepReps=true){
+ const reps=st.reps; Object.assign(st,fresh()); if(keepReps)st.reps=reps; st.reason=why;
 }
-function abort(st,why){
-  st.phase="WAIT_READY"; st.ready=st.top=st.returned=0;
-  st.startedAt=0; st.minAngle=180; st.maxAngle=0; st.reason=why;
+function readyPose(m,a){
+ let votes=0,available=0;
+ if(finite(a)){available++; if(a>=CFG.readyAngle)votes++}
+ if(finite(m.hh)){available++; if(m.hh<=CFG.readyHandHipMax)votes++}
+ if(finite(m.ws)){available++; if(m.ws>=CFG.readyWristShoulderMin)votes++}
+ return available>=2 && votes>=2;
 }
-function update(frame,side,ts){
-  const st=S[side], a=num(angle(frame,side)), c=confidence(frame,side);
+function topPose(m,a){
+ let votes=0,available=0;
+ if(finite(a)){available++; if(a<=CFG.topAngle)votes++}
+ if(finite(m.hh)){available++; if(m.hh>=CFG.topHandHipMin)votes++}
+ if(finite(m.ws)){available++; if(m.ws<=CFG.topWristShoulderMax)votes++}
+ // Angolo molto chiuso è sufficiente anche in frontale.
+ return (finite(a)&&a<=CFG.deepTopAngle) || (available>=2&&votes>=2);
+}
+function update(f,side,ts){
+ const st=S[side],m=M(f,side);
+ if(!finite(m.a)||m.conf<CFG.minArmConfidence||m.torso<CFG.minTorsoConfidence){
+   resetSide(st,"TRACKING");return null;
+ }
+ if(st.lastTs && ts-st.lastTs>CFG.maxGapMs){resetSide(st,"GAP");st.lastRaw=m.a;st.lastTs=ts;return null}
+ if(st.lastRaw!==null && Math.abs(m.a-st.lastRaw)>CFG.maxAngleJump){
+   resetSide(st,"ANGLE_JUMP");st.lastRaw=m.a;st.lastTs=ts;return null;
+ }
+ st.lastRaw=m.a;st.lastTs=ts;
+ st.a=st.a===null?m.a:(CFG.smooth*m.a+(1-CFG.smooth)*st.a);
+ const a=st.a,ready=readyPose(m,a),top=topPose(m,a);
 
-  if(a===null || c<CFG.minConfidence){ abort(st,"TRACKING"); st.lastAngle=null; st.lastTs=ts; return null; }
-  if(st.lastTs && ts-st.lastTs>CFG.maxGapMs){ abort(st,"GAP"); st.lastAngle=a; st.lastTs=ts; return null; }
-  if(st.lastAngle!==null && Math.abs(a-st.lastAngle)>CFG.maxAngleJump){
-    abort(st,"ANGLE_JUMP"); st.lastAngle=a; st.lastTs=ts; return null;
-  }
-  st.lastAngle=a; st.lastTs=ts;
+ if(st.phase==="WAIT_READY"){
+   if(ready){if(++st.ready>=CFG.readyFrames){st.phase="READY";st.reason=""}}else st.ready=0;
+   return null;
+ }
+ if(st.phase==="READY"){
+   if(a<CFG.startAngle || (!ready && finite(m.hh)&&m.hh>CFG.readyHandHipMax)){
+     st.phase="UP";st.start=ts;st.minA=a;st.maxA=a;st.top=0;
+   }
+   return null;
+ }
 
-  if(st.phase==="WAIT_READY"){
-    if(a>=CFG.readyAngle){
-      if(++st.ready>=CFG.readyFrames){ st.phase="READY"; st.reason=""; }
-    } else st.ready=0;
-    return null;
-  }
-  if(st.phase==="READY"){
-    if(a<CFG.startAngle){
-      st.phase="UP"; st.startedAt=ts; st.minAngle=a; st.maxAngle=a; st.top=0;
-    }
-    return null;
-  }
+ st.minA=Math.min(st.minA,a);st.maxA=Math.max(st.maxA,a);
+ if(ts-st.start>CFG.maxRepMs){resetSide(st,"TIMEOUT");return null}
 
-  st.minAngle=Math.min(st.minAngle,a); st.maxAngle=Math.max(st.maxAngle,a);
-  if(ts-st.startedAt>CFG.maxRepMs){ abort(st,"TIMEOUT"); return null; }
-
-  if(st.phase==="UP"){
-    if(a<=CFG.topAngle){
-      if(++st.top>=CFG.topFrames){ st.phase="TOP"; }
-    } else st.top=0;
-    if(a>=CFG.readyAngle){ abort(st,"NO_TOP"); }
-    return null;
-  }
-  if(st.phase==="TOP"){
-    if(a>CFG.leaveTopAngle){ st.phase="DOWN"; st.returned=0; }
-    return null;
-  }
-  if(st.phase==="DOWN"){
-    if(a>=CFG.readyAngle){
-      if(++st.returned>=CFG.returnFrames){
-        const duration=ts-st.startedAt, rom=st.maxAngle-st.minAngle;
-        if(duration>=CFG.minRepMs && duration<=CFG.maxRepMs && rom>=CFG.minROM){
-          st.reps++;
-          const ev={type:"rep",side,reps:st.reps,duration,rom};
-          abort(st,""); return ev;
-        }
-        abort(st,rom<CFG.minROM?"ROM":"DURATION");
-      }
-    } else st.returned=0;
-  }
-  return null;
+ if(st.phase==="UP"){
+   if(top){if(++st.top>=CFG.topFrames)st.phase="TOP"}else st.top=0;
+   if(ready && ts-st.start>300){resetSide(st,"NO_TOP")}
+   return null;
+ }
+ if(st.phase==="TOP"){
+   // discesa: basta uscire chiaramente dalla zona alta
+   if(a>Math.max(CFG.topAngle+10,105) || (finite(m.hh)&&m.hh<CFG.topHandHipMin*.88)){
+     st.phase="DOWN";st.ret=0;
+   }
+   return null;
+ }
+ if(st.phase==="DOWN"){
+   if(ready){
+     if(++st.ret>=CFG.returnFrames){
+       const duration=ts-st.start,rom=st.maxA-st.minA;
+       if(duration>=CFG.minRepMs&&duration<=CFG.maxRepMs&&rom>=CFG.minRom){
+         st.reps++; const ev={type:"rep",side,total:S.left.reps+S.right.reps,
+           sideReps:st.reps,duration,rom};
+         resetSide(st,""); return ev;
+       }
+       resetSide(st,rom<CFG.minRom?"ROM":"DURATION");
+     }
+   } else st.ret=0;
+ }
+ return null;
 }
 
 const CurlExercise={
-  id:"curl",
-  name:"Curl",
-  reset(){ Object.assign(S.left,sideState()); Object.assign(S.right,sideState()); },
-  analyze(frame){
-    const ts=performance.now();
-    const l=update(frame,"left",ts), r=update(frame,"right",ts);
-    const event=l||r;
-    const result={
-      phase:`SX ${S.left.phase} · DX ${S.right.phase}`,
-      reps:S.left.reps+S.right.reps,
-      leftReps:S.left.reps,rightReps:S.right.reps,
-      leftAngle:angle(frame,"left"),rightAngle:angle(frame,"right"),
-      leftReason:S.left.reason,rightReason:S.right.reason,
-      event
-    };
-    // Eventi generici opzionali: il Core può ascoltarli senza conoscere il Curl.
-    if(event) window.dispatchEvent(new CustomEvent("exercise-rep",{detail:{exercise:"curl",...event,total:result.reps}}));
-    return result;
-  }
+ id:"curl",name:"Curl",
+ reset(){Object.assign(S.left,fresh());Object.assign(S.right,fresh())},
+ analyze(frame){
+   const ts=performance.now();
+   const le=update(frame,"left",ts),re=update(frame,"right",ts),event=le||re;
+   const lm=M(frame,"left"),rm=M(frame,"right");
+   const result={
+    phase:`SX ${S.left.phase} · DX ${S.right.phase}`,
+    reps:S.left.reps+S.right.reps,leftReps:S.left.reps,rightReps:S.right.reps,
+    leftAngle:S.left.a??lm.a,rightAngle:S.right.a??rm.a,
+    leftReason:S.left.reason,rightReason:S.right.reason,event
+   };
+   if(event){
+     window.dispatchEvent(new CustomEvent("exercise-rep",{detail:{exercise:"curl",...event}}));
+   }
+   return result;
+ }
 };
-
 window.CurlExercise=CurlExercise;
