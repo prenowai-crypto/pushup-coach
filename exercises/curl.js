@@ -10,11 +10,11 @@ function angle2D(a,b,c){
   let d=Math.abs((ab-cb)*180/Math.PI);return d>180?360-d:d;
 }
 function ema(old,v,a){return old==null?v:old*a+v*(1-a)}
-function newArm(name,sh,el,wr){return{name,sh,el,wr,state:"GET_READY",smooth:null,topFrames:0,extFrames:0,repStart:0,reps:0,lastRepMs:0,lastRaw:null,lastVis:0}}
+function newArm(name,sh,el,wr){return{name,sh,el,wr,state:"GET_READY",smooth:null,topFrames:0,extFrames:0,repStart:0,reps:0,lastRepMs:0,lastRaw:null,lastVis:0,tech:{baseline:null,repBase:null,max:null,last:null,lastDelta:null}}}
 let arms={left:newArm("SX",11,13,15),right:newArm("DX",12,14,16)};
 function resetArms(){arms={left:newArm("SX",11,13,15),right:newArm("DX",12,14,16)}}
 
-function analyzeArm(lm,a){
+function analyzeArm(lm,a,elbowTorso){
   if(!lm?.length)return {ok:false,reason:"NO IMAGE LANDMARKS",arm:a};
   const sh=lm[a.sh],el=lm[a.el],wr=lm[a.wr];
   const vis=Math.min(sh?.visibility??0,el?.visibility??0,wr?.visibility??0);
@@ -24,6 +24,18 @@ function analyzeArm(lm,a){
 
   const raw=angle2D(sh,el,wr);a.lastRaw=raw;a.smooth=ema(a.smooth,raw,CFG.EMA);
   const ang=a.smooth,now=performance.now();let repEvent=false;
+  // TECH CALIBRATION ONLY: osserva gomito→torso, NON modifica il counter.
+  if(Number.isFinite(elbowTorso)){
+    if((a.state==="GET_READY"||a.state==="READY") && ang>CFG.EXTENDED){
+      a.tech.baseline=a.tech.baseline==null?elbowTorso:(a.tech.baseline*.92+elbowTorso*.08);
+    }
+    if(a.state==="READY" && ang<CFG.START_CURL){
+      a.tech.repBase=Number.isFinite(a.tech.baseline)?a.tech.baseline:elbowTorso;
+      a.tech.max=elbowTorso;
+    } else if(["CURL_UP","TOP","LOWER"].includes(a.state)){
+      a.tech.max=a.tech.max==null?elbowTorso:Math.max(a.tech.max,elbowTorso);
+    }
+  }
 
   if(a.state==="GET_READY"){
     if(ang>CFG.EXTENDED){if(++a.extFrames>=3){a.state="READY";a.extFrames=0}}else a.extFrames=0;
@@ -38,7 +50,13 @@ function analyzeArm(lm,a){
     if(ang>CFG.EXTENDED){
       if(++a.extFrames>=CFG.EXT_FRAMES){
         const ms=now-a.repStart;
-        if(ms>=CFG.MIN_REP&&ms<=CFG.MAX_REP){a.reps++;a.lastRepMs=ms;repEvent=true}
+        if(ms>=CFG.MIN_REP&&ms<=CFG.MAX_REP){
+          a.reps++;a.lastRepMs=ms;repEvent=true;
+          if(Number.isFinite(a.tech.repBase)&&Number.isFinite(a.tech.max)){
+            a.tech.last={base:a.tech.repBase,max:a.tech.max,delta:a.tech.max-a.tech.repBase};
+            a.tech.lastDelta=a.tech.last.delta;
+          }
+        }
         a.state="READY";a.extFrames=0;a.repStart=0;
       }
     }else a.extFrames=0;
@@ -51,15 +69,16 @@ const CurlExercise={
   reset(){resetArms()},
   analyze(frame){
     const lm=frame?.image;
-    const L=analyzeArm(lm,arms.left),R=analyzeArm(lm,arms.right);
+    const rel=frame?.relations||{};
+    const L=analyzeArm(lm,arms.left,rel.leftElbowToTorso),R=analyzeArm(lm,arms.right,rel.rightElbowToTorso);
     const total=arms.left.reps+arms.right.reps;
-    for(const x of [L,R])if(x.repEvent)window.dispatchEvent(new CustomEvent("exercise-rep",{detail:{exercise:"curl",side:x.arm.name,total,sideReps:x.arm.reps,duration:x.arm.lastRepMs}}));
+    for(const x of [L,R])if(x.repEvent)window.dispatchEvent(new CustomEvent("exercise-rep",{detail:{exercise:"curl",side:x.arm.name,total,sideReps:x.arm.reps,duration:x.arm.lastRepMs,technique:{elbowToTorso:x.arm.tech.last}}}));
     const fmt=x=>x.ok?`${Math.round(x.ang)}°`:`${x.reason}`;
     return{
       phase:`SX ${arms.left.state.replace("_"," ")} · DX ${arms.right.state.replace("_"," ")}`,
       reps:total,leftReps:arms.left.reps,rightReps:arms.right.reps,
       leftAngle:L.ok?L.ang:null,rightAngle:R.ok?R.ang:null,
-      debug:`CURL V6 2D | SX ${fmt(L)} raw=${Number.isFinite(arms.left.lastRaw)?Math.round(arms.left.lastRaw):"--"} vis=${Math.round(arms.left.lastVis*100)}% ${arms.left.state} rep=${arms.left.reps} | DX ${fmt(R)} raw=${Number.isFinite(arms.right.lastRaw)?Math.round(arms.right.lastRaw):"--"} vis=${Math.round(arms.right.lastVis*100)}% ${arms.right.state} rep=${arms.right.reps}`
+      debug:`CURL V7 CAL | SX ${fmt(L)} ${arms.left.state} rep=${arms.left.reps} E→T=${Number.isFinite(rel.leftElbowToTorso)?rel.leftElbowToTorso.toFixed(3):"--"} base=${Number.isFinite(arms.left.tech.baseline)?arms.left.tech.baseline.toFixed(3):"--"} Δlast=${Number.isFinite(arms.left.tech.lastDelta)?arms.left.tech.lastDelta.toFixed(3):"--"} | DX ${fmt(R)} ${arms.right.state} rep=${arms.right.reps} E→T=${Number.isFinite(rel.rightElbowToTorso)?rel.rightElbowToTorso.toFixed(3):"--"} base=${Number.isFinite(arms.right.tech.baseline)?arms.right.tech.baseline.toFixed(3):"--"} Δlast=${Number.isFinite(arms.right.tech.lastDelta)?arms.right.tech.lastDelta.toFixed(3):"--"}`
     };
   }
 };
