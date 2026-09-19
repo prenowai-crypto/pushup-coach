@@ -1,5 +1,5 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>Dumbbell Curl Coach V4.3 Voice Loader</title>
-<style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>💪 Dumbbell Curl Coach V4.3 Voice Loader</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Inquadrati di lato o a 45°, dalla testa almeno fino ai fianchi. Braccio lungo e manubrio in mano.</div><div class="controls"><button id="start">AVVIA</button><button class="secondary" id="voice">🔊 VOCE</button><button class="secondary" id="switch">CAMERA</button><button class="secondary" id="reset">RESET</button></div><div class="voiceDebug"><h2>VOICE DEBUG</h2><div class="voiceLine" id="vdScript">meSpeak script: …</div><div class="voiceLine" id="vdConfig">Config: …</div><div class="voiceLine" id="vdVoice">Voce italiana: …</div><div class="voiceLine" id="vdAudio">AudioContext: …</div><div class="voiceLine" id="vdPlay">Ultimo test: —</div><div class="voiceActions"><button class="secondary" id="testBeep">TEST AUDIO</button><button id="testVoice">TEST VOCE</button></div></div><div class="debug" id="debug"></div></main>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>Dumbbell Curl Coach V4.4 Native Loader</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>💪 Dumbbell Curl Coach V4.4 Native Loader</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Inquadrati di lato o a 45°, dalla testa almeno fino ai fianchi. Braccio lungo e manubrio in mano.</div><div class="controls"><button id="start">AVVIA</button><button class="secondary" id="voice">🔊 VOCE</button><button class="secondary" id="switch">CAMERA</button><button class="secondary" id="reset">RESET</button></div><div class="voiceDebug"><h2>VOICE DEBUG</h2><div class="voiceLine" id="vdScript">meSpeak script: …</div><div class="voiceLine" id="vdConfig">Config: …</div><div class="voiceLine" id="vdVoice">Voce italiana: …</div><div class="voiceLine" id="vdAudio">AudioContext: …</div><div class="voiceLine" id="vdPlay">Ultimo test: —</div><div class="voiceActions"><button class="secondary" id="testBeep">TEST AUDIO</button><button id="testVoice">TEST VOCE</button></div></div><div class="debug" id="debug"></div></main>
 <script src="https://cdn.jsdelivr.net/gh/btopro/mespeak@master/mespeak.js"></script>
 <script type="module">
 import {PoseLandmarker,FilesetResolver,DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm";
@@ -16,31 +16,98 @@ async function audioBeep(){
 }
 async function initVoice(){
   vline(ui.vdScript,"meSpeak script",window.meSpeak?"OK":"NON CARICATO",!!window.meSpeak);
-  if(!window.meSpeak){vline(ui.vdConfig,"Config","impossibile: meSpeak assente",false);return;}
+  if(!window.meSpeak){
+    vline(ui.vdConfig,"Config","meSpeak assente",false);
+    vline(ui.vdVoice,"Voce italiana","non caricata",false);
+    return;
+  }
+
   const configURL="https://cdn.jsdelivr.net/gh/btopro/mespeak@master/mespeak_config.json";
   const voiceURL="https://cdn.jsdelivr.net/gh/btopro/mespeak@master/voices/it.json";
-  try{
-    vline(ui.vdConfig,"Config","download…",null);
-    const cr=await fetch(configURL,{cache:"force-cache"});
-    if(!cr.ok)throw new Error("config HTTP "+cr.status);
-    const config=await cr.json();
-    meSpeak.loadConfig(config);
-    const configOK=!!meSpeak.isConfigLoaded();
-    vline(ui.vdConfig,"Config",configOK?"OK":"caricata ma non inizializzata",configOK);
-    if(!configOK)return;
 
-    vline(ui.vdVoice,"Voce italiana","download…",null);
-    const vr=await fetch(voiceURL,{cache:"force-cache"});
-    if(!vr.ok)throw new Error("voce HTTP "+vr.status);
-    const voice=await vr.json();
-    meSpeak.loadVoice(voice);
+  try{
+    // V4.4: usa direttamente il loader nativo di meSpeak con callback.
+    vline(ui.vdConfig,"Config","caricamento nativo…",null);
+
+    await new Promise((resolve,reject)=>{
+      let finished=false;
+      const timeout=setTimeout(()=>{
+        if(finished)return;
+        finished=true;
+        if(meSpeak.isConfigLoaded()) resolve();
+        else reject(new Error("timeout configurazione"));
+      },8000);
+
+      try{
+        meSpeak.loadConfig(configURL, function(){
+          if(finished)return;
+          clearTimeout(timeout);
+          finished=true;
+          if(meSpeak.isConfigLoaded()) resolve();
+          else reject(new Error("callback ricevuta ma isConfigLoaded() = false"));
+        });
+      }catch(e){
+        clearTimeout(timeout);
+        finished=true;
+        reject(e);
+      }
+
+      // Alcune build non invocano la callback della config: verifica anche a polling.
+      const poll=setInterval(()=>{
+        if(finished){clearInterval(poll);return;}
+        if(meSpeak.isConfigLoaded()){
+          clearInterval(poll);
+          clearTimeout(timeout);
+          finished=true;
+          resolve();
+        }
+      },100);
+    });
+
+    vline(ui.vdConfig,"Config","OK",true);
+
+    vline(ui.vdVoice,"Voce italiana","caricamento nativo…",null);
+    await new Promise((resolve,reject)=>{
+      let finished=false;
+      const timeout=setTimeout(()=>{
+        if(finished)return;
+        finished=true;
+        if(meSpeak.isVoiceLoaded("it")) resolve("it");
+        else reject(new Error("timeout voce italiana"));
+      },8000);
+
+      try{
+        meSpeak.loadVoice(voiceURL,function(success,message){
+          if(finished)return;
+          clearTimeout(timeout);
+          finished=true;
+          if(success && meSpeak.isVoiceLoaded("it")) resolve(message || "it");
+          else reject(new Error("loadVoice: "+String(message || "voce non inizializzata")));
+        });
+      }catch(e){
+        clearTimeout(timeout);
+        finished=true;
+        reject(e);
+      }
+    });
+
     voiceReady=!!meSpeak.isVoiceLoaded("it");
-    if(voiceReady)meSpeak.setDefaultVoice("it");
-    vline(ui.vdVoice,"Voce italiana",voiceReady?"OK":"JSON ricevuto ma voce non inizializzata",voiceReady);
+    if(!voiceReady) throw new Error("isVoiceLoaded('it') = false");
+    meSpeak.setDefaultVoice("it");
+
+    vline(ui.vdVoice,"Voce italiana","OK ("+meSpeak.getDefaultVoice()+")",true);
+    vline(ui.vdPlay,"Ultimo test","TTS pronto: premi TEST VOCE",true);
   }catch(e){
     voiceReady=false;
-    vline(ui.vdVoice,"Voce italiana","ERRORE: "+e.message,false);
-    vline(ui.vdPlay,"Ultimo test","caricamento TTS fallito",false);
+    const msg=e && e.message ? e.message : String(e);
+    if(!meSpeak.isConfigLoaded()){
+      vline(ui.vdConfig,"Config","ERRORE: "+msg,false);
+      vline(ui.vdVoice,"Voce italiana","in attesa della config",false);
+    }else{
+      vline(ui.vdConfig,"Config","OK",true);
+      vline(ui.vdVoice,"Voce italiana","ERRORE: "+msg,false);
+    }
+    vline(ui.vdPlay,"Ultimo test","loader TTS: "+msg,false);
   }
 }
 function speakText(text,{force=false}={}){
@@ -82,6 +149,14 @@ function reset(){reps=0;ui.reps.textContent="0";ui.tempo.textContent="--";smElbo
 $("start").onclick=startCamera;
 $("voice").onclick=()=>{voiceEnabled=!voiceEnabled;$("voice").textContent=voiceEnabled?"🔊 VOCE":"🔇 MUTO";if(!voiceEnabled&&window.meSpeak)meSpeak.resetQueue();else if(voiceReady)speakText("Voce attiva",{force:true});else fb("La voce italiana si sta ancora caricando. Riprova tra qualche secondo.","warn",false)};
 $("testBeep").onclick=async()=>{ui.vdPlay.textContent="Ultimo test: test audio…";await audioBeep()};
-$("testVoice").onclick=async()=>{await audioBeep();setTimeout(()=>speakText("Ciao, il coach vocale funziona",{force:true}),260)};
+$("testVoice").onclick=async()=>{
+  await audioBeep();
+  if(!window.meSpeak){vline(ui.vdPlay,"Ultimo test","meSpeak assente",false);return;}
+  if(!meSpeak.isConfigLoaded()){vline(ui.vdPlay,"Ultimo test","config non pronta",false);return;}
+  if(!meSpeak.isVoiceLoaded("it")){vline(ui.vdPlay,"Ultimo test","voce it non pronta",false);return;}
+  voiceReady=true;
+  meSpeak.setDefaultVoice("it");
+  setTimeout(()=>speakText("Ciao, il coach vocale funziona",{force:true}),260);
+};
 $("switch").onclick=async()=>{facing=facing==="environment"?"user":"environment";if(running){running=false;stopStream();await startCamera()}};$("reset").onclick=reset;if(!window.isSecureContext){status("HTTPS RICHIESTO","bad");fb("Apri l'app tramite HTTPS.","bad")}init();
 </script></body></html>
