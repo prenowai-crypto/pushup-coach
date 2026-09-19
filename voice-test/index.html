@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="it"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paola Direct Final Test</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;max-width:760px;margin:auto;padding:24px;background:#0b1020;color:#eef2ff}
+textarea{width:100%;min-height:110px;box-sizing:border-box;padding:14px;border-radius:12px;font:inherit}
+button{padding:14px 18px;margin-top:12px;border:0;border-radius:12px;font:inherit;font-weight:750}
+#log{margin-top:18px;white-space:pre-wrap;background:#111827;padding:14px;border-radius:12px;min-height:150px;font:13px ui-monospace,monospace}
+audio{width:100%;margin-top:16px}</style></head>
+<body>
+<h1>🎙️ Paola · test diretto</h1>
+<p>Niente piper-tts-web.js e niente CDN Piper. Usa il worker fonemizzatore originale del repository + ONNX Runtime Web.</p>
+<textarea id="text">Uno. Due. Tre. Tieni i gomiti più vicini al corpo.</textarea><br>
+<button id="go">GENERA E PARLA</button>
+<div id="log">Pronto.</div><div id="player"></div>
+<script type="module">
+import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/+esm";
+
+const MODEL="https://huggingface.co/rhasspy/piper-voices/resolve/main/it/it_IT/paola/medium/it_IT-paola-medium.onnx";
+const CONFIG=MODEL+".json";
+ort.env.wasm.wasmPaths="./onnx/";
+ort.env.wasm.numThreads=1;
+
+const logEl=document.querySelector("#log"),btn=document.querySelector("#go"),player=document.querySelector("#player");
+const log=m=>{logEl.textContent+="\n• "+m;};
+let cfg=null,modelURL=null,session=null,worker=null;
+
+function workerCall(type,data){
+ return new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>reject(new Error("timeout worker "+type)),30000);
+   worker.onmessage=e=>{clearTimeout(timer);resolve(e.data)};
+   worker.onerror=e=>{clearTimeout(timer);reject(new Error("worker: "+(e.message||"errore")))};
+   worker.postMessage({type,data});
+ });
+}
+function wavBlob(samples,sr){
+ const b=new ArrayBuffer(44+samples.length*2),v=new DataView(b);
+ const ws=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+ ws(0,"RIFF");v.setUint32(4,36+samples.length*2,true);ws(8,"WAVE");ws(12,"fmt ");
+ v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);
+ v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);ws(36,"data");v.setUint32(40,samples.length*2,true);
+ for(let i=0,o=44;i<samples.length;i++,o+=2){let s=Math.max(-1,Math.min(1,samples[i]));v.setInt16(o,s<0?s*32768:s*32767,true)}
+ return new Blob([b],{type:"audio/wav"});
+}
+async function prepare(){
+ if(session)return;
+ log("Config Paola…");
+ cfg=await (await fetch(CONFIG)).json();
+ log("Config OK · lingua "+cfg.espeak.voice);
+ log("Avvio fonemizzatore Piper originale…");
+ worker=new Worker("./worker/PhonemizeWebWorker.js",{type:"module"});
+ worker.postMessage({type:"constructor",data:{basePath:"../piper/"}});
+ log("Scarico Paola…");
+ const r=await fetch(MODEL); if(!r.ok)throw new Error("modello HTTP "+r.status);
+ const blob=await r.blob(); log("Paola ricevuta: "+(blob.size/1024/1024).toFixed(1)+" MB");
+ modelURL=URL.createObjectURL(blob);
+ log("Creo sessione ONNX…");
+ session=await ort.InferenceSession.create(modelURL,{executionProviders:["wasm"]});
+ log("ONNX PRONTO");
+}
+btn.onclick=async()=>{
+ btn.disabled=true;player.innerHTML="";logEl.textContent="Avvio test…";
+ try{
+   await prepare();
+   const text=document.querySelector("#text").value.trim();
+   log("Fonemizzazione IT…");
+   const pd=await workerCall("phonemize",[text,[cfg,modelURL]]);
+   if(!pd?.phoneme_ids?.length)throw new Error("fonemizzatore senza phoneme_ids");
+   log("Fonemi OK · "+pd.phoneme_ids.length+" token");
+   const ids=BigInt64Array.from(pd.phoneme_ids.map(BigInt));
+   const feeds={
+     input:new ort.Tensor("int64",ids,[1,ids.length]),
+     input_lengths:new ort.Tensor("int64",BigInt64Array.from([BigInt(ids.length)]),[1]),
+     scales:new ort.Tensor("float32",Float32Array.from([
+       cfg.inference.noise_scale,cfg.inference.length_scale,cfg.inference.noise_w
+     ]),[3])
+   };
+   if(Object.keys(cfg.speaker_id_map||{}).length)feeds.sid=new ort.Tensor("int64",BigInt64Array.from([0n]),[1]);
+   log("Inferenza Paola…");
+   const t=performance.now(),res=await session.run(feeds);
+   log("Inferenza OK · "+((performance.now()-t)/1000).toFixed(1)+" s");
+   const audioBlob=wavBlob(new Float32Array(res.output.data),cfg.audio.sample_rate);
+   const url=URL.createObjectURL(audioBlob),a=document.createElement("audio");
+   a.controls=true;a.autoplay=true;a.src=url;player.appendChild(a);
+   a.onplay=()=>log("🔊 AUDIO IN RIPRODUZIONE");
+   a.onended=()=>{log("✓ COMPLETATO");URL.revokeObjectURL(url)};
+   await a.play();
+ }catch(e){console.error(e);log("❌ ERRORE: "+(e?.message||e))}
+ finally{btn.disabled=false}
+};
+</script></body></html>
