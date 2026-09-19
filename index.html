@@ -1,4 +1,4 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V10R.1 Relationship Telemetry</title>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V10R.2 Visual Relationship Debugger</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}.recap{display:none;margin-top:12px;background:#151a21;border:1px solid #303947;border-radius:16px;padding:14px}
 .recap.show{display:block}.recap h2{margin:0 0 10px;font-size:16px}.recapTop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .recapBox{background:#10151b;border-radius:11px;padding:10px;text-align:center}.recapBox b{display:block;font-size:20px}.recapBox span{font-size:9px;color:#8e99a8}
@@ -9,7 +9,18 @@
 color:#fff;padding:9px 11px;border-radius:10px;font:700 13px/1.45 system-ui;pointer-events:none;
 backdrop-filter:blur(4px);min-width:190px}
 #relTelemetry .l{color:#62e6a7} #relTelemetry .r{color:#ffd166}
-</style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V10R.1 · Relationship Telemetry</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div id="relTelemetry">MANO ↔ BACINO<br><span class="l">SX: --</span><br><span class="r">DX: --</span></div><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per Curl Advanced inquadra busto, braccio e mano: Pose + 21 landmark della mano. Per lo squat usa una vista laterale con il corpo intero.</div><div class="diag"><h2>UNIVERSAL BODY TRACKER</h2><div class="diagGrid">
+</style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V10R.2 · Visual Relationship Debugger</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div id="relTelemetry">
+<div style="margin-bottom:5px">RELATIONSHIP DEBUG</div>
+<select id="relSelect" style="font:inherit;max-width:180px;margin-bottom:5px">
+<option value="handHip">Mano → bacino</option>
+<option value="wristShoulder">Polso → spalla</option>
+<option value="hands">Mano SX ↔ DX</option>
+<option value="feet">Piede SX ↔ DX</option>
+<option value="kneeFoot">Ginocchio → piede</option>
+<option value="elbowTorso">Gomito → torso</option>
+</select>
+<div id="relValues"><span class="l">SX: --</span><br><span class="r">DX: --</span></div>
+</div><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per Curl Advanced inquadra busto, braccio e mano: Pose + 21 landmark della mano. Per lo squat usa una vista laterale con il corpo intero.</div><div class="diag"><h2>UNIVERSAL BODY TRACKER</h2><div class="diagGrid">
 <div class="diagItem"><div class="dlabel">POSE</div><div class="dval" id="trkPose">33 punti</div></div>
 <div class="diagItem"><div class="dlabel">MANI</div><div class="dval" id="trkHands">--</div></div>
 <div class="diagItem"><div class="dlabel">PROFILO</div><div class="dval" id="trkProfile">--</div></div>
@@ -543,6 +554,29 @@ function showCurlDiag(m){
  ui.dWrist.textContent=m.wristFlex==null?"--":Math.round(m.wristFlex)+"°";
  ui.dPalm.textContent=m.forearmRotation==null?"--":Math.round(m.forearmRotation)+"°";
 }
+
+
+// Draw the selected relationship directly on the camera canvas.
+function drawRelationshipDebug(){
+ const f=UniversalBody.frame,sel=document.getElementById("relSelect")?.value;
+ if(!f?.image||!drawer||!sel)return;
+ const p=f.image,ctx=drawer.ctx||canvas.getContext("2d"),W=canvas.width,H=canvas.height;
+ const P=n=>{const i=UB_INDEX[n];const q=i==null?null:p[i];return q?{x:q.x*W,y:q.y*H}:null};
+ const mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+ const line=(a,b,txt)=>{if(!a||!b)return;ctx.save();ctx.lineWidth=4;ctx.strokeStyle="rgba(255,215,0,.95)";ctx.fillStyle="rgba(255,255,255,.98)";ctx.font="bold 15px system-ui";ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();let m=mid(a,b);ctx.fillText(txt,m.x+6,m.y-6);ctx.restore()};
+ const fmt=v=>Number.isFinite(v)?v.toFixed(2):"--";
+ const R=f.relations;
+ if(sel==="handHip"){line(P("leftWrist"),P("leftHip"),"SX "+fmt(R.leftHandToHip));line(P("rightWrist"),P("rightHip"),"DX "+fmt(R.rightHandToHip))}
+ else if(sel==="wristShoulder"){line(P("leftWrist"),P("leftShoulder"),"SX "+fmt(R.leftWristToShoulder));line(P("rightWrist"),P("rightShoulder"),"DX "+fmt(R.rightWristToShoulder))}
+ else if(sel==="hands")line(P("leftWrist"),P("rightWrist"),fmt(R.handDistance));
+ else if(sel==="feet")line(P("leftFoot"),P("rightFoot"),fmt(R.footDistance));
+ else if(sel==="kneeFoot"){line(P("leftKnee"),P("leftFoot"),"SX "+fmt(R.leftKneeToFoot));line(P("rightKnee"),P("rightFoot"),"DX "+fmt(R.rightKneeToFoot))}
+ else if(sel==="elbowTorso"){
+   const sc=mid(P("leftShoulder"),P("rightShoulder")),hc=mid(P("leftHip"),P("rightHip"));
+   // visual line to torso center is diagnostic; numeric value remains exact point-to-torso-axis distance.
+   const tc=mid(sc,hc);line(P("leftElbow"),tc,"SX "+fmt(R.leftElbowToTorso));line(P("rightElbow"),tc,"DX "+fmt(R.rightElbowToTorso));
+ }
+}
 function analyzeCurlArm(lm,a){
  const sh=lm[a.sh],el=lm[a.el],wr=lm[a.wr],hip=lm[a.hip];
  if([sh,el,wr,hip].some(p=>(p?.visibility||0)<CFG.VIS))return {ok:false,arm:a};
@@ -660,12 +694,23 @@ function loop(){if(!running)return;if(video.readyState>=2&&video.currentTime!==l
     lastHandRun=now;lastHands=handLandmarker.detectForVideo(video,now);
   }else if(!ExerciseEngine.current?.trackers?.includes("hands"))lastHands=null;
   const bodyFrame=BodyTracker.update(r,lastHands);UniversalBody.update(r,lastHands);
-const _rr=UniversalBody.frame?.relations,_rt=document.getElementById("relTelemetry");
-if(_rr&&_rt){
- const L=_rr.leftHandToHip,R=_rr.rightHandToHip;
- _rt.innerHTML=`MANO ↔ BACINO <small>(× torso)</small><br><span class="l">SX: ${Number.isFinite(L)?L.toFixed(3):"--"}</span><br><span class="r">DX: ${Number.isFinite(R)?R.toFixed(3):"--"}</span>`;
+const _rr=UniversalBody.frame?.relations,_rv=document.getElementById("relValues"),_rs=document.getElementById("relSelect");
+if(_rr&&_rv&&_rs){
+ let L=NaN,R=NaN,label="";
+ switch(_rs.value){
+  case "wristShoulder":L=_rr.leftWristToShoulder;R=_rr.rightWristToShoulder;label="× torso";break;
+  case "hands":L=_rr.handDistance;label="× spalle";break;
+  case "feet":L=_rr.footDistance;label="× anche";break;
+  case "kneeFoot":L=_rr.leftKneeToFoot;R=_rr.rightKneeToFoot;label="× torso";break;
+  case "elbowTorso":L=_rr.leftElbowToTorso;R=_rr.rightElbowToTorso;label="× spalle";break;
+  default:L=_rr.leftHandToHip;R=_rr.rightHandToHip;label="× torso";
+ }
+ const f=v=>Number.isFinite(v)?v.toFixed(3):"--";
+ _rv.innerHTML=(_rs.value==="hands"||_rs.value==="feet")
+   ?`<span class="l">DIST: ${f(L)}</span> <small>${label}</small>`
+   :`<span class="l">SX: ${f(L)}</span><br><span class="r">DX: ${f(R)}</span> <small>${label}</small>`;
 }
-MotionFeatures.push(bodyFrame);
+MotionFeatures.push(bodyFrame);drawRelationshipDebug();
   draw(r,lastHands);analyze(r)
  }catch(e){console.error(e);debug(e.message)}
 }requestAnimationFrame(loop)}
