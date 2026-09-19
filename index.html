@@ -1,5 +1,5 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V5 Multi Exercise</title>
-<style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V5</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per il curl inquadrati di lato/45°. Per lo squat usa una vista laterale con il corpo intero.</div><div class="controls"><button id="start">AVVIA</button><button class="secondary" id="voice">🔊 VOCE</button><button class="secondary" id="switch">CAMERA</button><button class="secondary" id="reset">RESET</button></div><div class="voiceDebug"><h2>VOICE DEBUG</h2><div class="voiceLine" id="vdScript">meSpeak script: …</div><div class="voiceLine" id="vdConfig">Config: …</div><div class="voiceLine" id="vdVoice">Voce italiana: …</div><div class="voiceLine" id="vdAudio">AudioContext: …</div><div class="voiceLine" id="vdPlay">Ultimo test: —</div><div class="voiceActions"><button class="secondary" id="testBeep">TEST AUDIO</button><button id="testVoice">TEST VOCE</button></div></div><div class="debug" id="debug"></div></main>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V5.1 Voice Manager</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V5.1</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per il curl inquadrati di lato/45°. Per lo squat usa una vista laterale con il corpo intero.</div><div class="controls"><button id="start">AVVIA</button><button class="secondary" id="voice">🔊 VOCE</button><button class="secondary" id="switch">CAMERA</button><button class="secondary" id="reset">RESET</button></div><div class="voiceDebug"><h2>VOICE DEBUG · V5.1 ANTI-OVERLAP</h2><div class="voiceLine" id="vdScript">meSpeak script: …</div><div class="voiceLine" id="vdConfig">Config: …</div><div class="voiceLine" id="vdVoice">Voce italiana: …</div><div class="voiceLine" id="vdAudio">AudioContext: …</div><div class="voiceLine" id="vdPlay">Ultimo test: —</div><div class="voiceActions"><button class="secondary" id="testBeep">TEST AUDIO</button><button id="testVoice">TEST VOCE</button></div></div><div class="debug" id="debug"></div></main>
 <script src="https://cdn.jsdelivr.net/gh/btopro/mespeak@master/mespeak.js"></script>
 <script type="module">
 import {PoseLandmarker,FilesetResolver,DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm";
@@ -111,19 +111,32 @@ async function initVoice(){
     vline(ui.vdPlay,"Ultimo test","loader TTS: "+msg,false);
   }
 }
-function speakText(text,{force=false}={}){
-  if(!voiceEnabled){vline(ui.vdPlay,"Ultimo test","voce disattivata",false);return false}
-  if(!voiceReady){vline(ui.vdPlay,"Ultimo test","voce italiana non pronta",false);return false}
-  if(!text)return false;
-  const now=performance.now();
-  if(!force&&(text===lastSpokenText||now-lastSpokenAt<VOICE_COOLDOWN))return false;
-  lastSpokenText=text;lastSpokenAt=now;
+const VoiceManager={
+ busy:false,queue:[],last:new Map(),seq:0,
+ enqueue(text,{priority=1,key=text,cooldown=4200,maxAge=3200}={}){
+  if(!voiceReady||!voiceEnabled||!text)return;
+  const now=performance.now(),prev=this.last.get(key)||0;
+  if(now-prev<cooldown)return; this.last.set(key,now);
+  const item={id:++this.seq,text,priority,key,created:now,maxAge};
+  if(priority>=10)this.queue=this.queue.filter(x=>x.priority>=10);
+  else this.queue=this.queue.filter(x=>x.key!==key);
+  this.queue.push(item);this.queue.sort((a,b)=>b.priority-a.priority||a.created-b.created);this.pump();
+ },
+ pump(){
+  if(this.busy||!voiceReady||!voiceEnabled)return;
+  const now=performance.now();this.queue=this.queue.filter(x=>now-x.created<=x.maxAge);
+  const item=this.queue.shift();if(!item)return;
+  this.busy=true;vline(ui.vdPlay,"Ultimo test","parlando: "+item.text,true);
   try{
-    if(force)meSpeak.resetQueue();voiceBusy=true;vline(ui.vdPlay,"Ultimo test","generazione: "+text,null);
-    const id=meSpeak.speak(text,{voice:"it",variant:"f2",speed:175,pitch:45,amplitude:100},()=>{voiceBusy=false;vline(ui.vdPlay,"Ultimo test","riproduzione completata",true)});
-    if(id===0||id===false||id==null){vline(ui.vdPlay,"Ultimo test","meSpeak.speak non ha avviato audio (id="+id+")",false);voiceBusy=false;return false}
-    vline(ui.vdPlay,"Ultimo test","avviato, id="+id,true);return true;
-  }catch(e){vline(ui.vdPlay,"Ultimo test","ERRORE "+e.message,false);voiceBusy=false;return false}
+   meSpeak.speak(item.text,{amplitude:85,pitch:47,speed:168,wordgap:1},()=>{
+    this.busy=false;setTimeout(()=>this.pump(),180);
+   });
+  }catch(e){this.busy=false;vline(ui.vdPlay,"Ultimo test","errore voce: "+(e?.message||e),false);setTimeout(()=>this.pump(),180)}
+ },
+ reset(){this.queue=[];this.busy=false;try{if(window.meSpeak)meSpeak.stop()}catch(e){}}
+};
+function speakText(text,{force=false,priority=1,key=null,cooldown=null,maxAge=null}={}){
+ VoiceManager.enqueue(text,{priority:force?Math.max(priority,10):priority,key:key||text,cooldown:cooldown??(force?500:4200),maxAge:maxAge??(force?5000:3200)});
 }
 function coach(text,css="",speak=true){
   if(text===lastFeedback)return;
@@ -186,6 +199,7 @@ function analyze(r){
 }
 function loop(){if(!running)return;if(video.readyState>=2&&video.currentTime!==lastVideo){lastVideo=video.currentTime;try{const r=pose.detectForVideo(video,performance.now());draw(r);analyze(r)}catch(e){console.error(e);debug(e.message)}}requestAnimationFrame(loop)}
 function reset(){
+ if(typeof VoiceManager!=="undefined")VoiceManager.reset();
  reps=0;ui.reps.textContent="0";ui.tempo.textContent="--";smElbow=null;smKnee=null;topFrames=extFrames=bottomFrames=standFrames=0;repStart=0;startElbowPos=startShoulderPos=null;lastFeedback="";setState("GET_READY");
  if(activeExercise==="squat")fb("Reset squat. Inquadrati di lato con il corpo intero e mettiti in piedi.","",false);
  else fb("Reset curl. Distendi il braccio con il manubrio in mano.","",false);
@@ -201,7 +215,7 @@ function setExercise(name){
  }
 }
 $("start").onclick=startCamera;$("exercise").onchange=e=>setExercise(e.target.value);
-$("voice").onclick=()=>{voiceEnabled=!voiceEnabled;$("voice").textContent=voiceEnabled?"🔊 VOCE":"🔇 MUTO";if(!voiceEnabled&&window.meSpeak)meSpeak.resetQueue();else if(voiceReady)speakText("Voce attiva",{force:true});else fb("La voce italiana si sta ancora caricando. Riprova tra qualche secondo.","warn",false)};
+$("voice").onclick=()=>{voiceEnabled=!voiceEnabled;$("voice").textContent=voiceEnabled?"🔊 VOCE":"🔇 MUTO";if(!voiceEnabled&&typeof VoiceManager!=="undefined")VoiceManager.reset();else if(voiceReady)speakText("Voce attiva",{force:true});else fb("La voce italiana si sta ancora caricando. Riprova tra qualche secondo.","warn",false)};
 $("testBeep").onclick=async()=>{ui.vdPlay.textContent="Ultimo test: test audio…";await audioBeep()};
 $("testVoice").onclick=async()=>{
   await audioBeep();
