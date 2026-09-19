@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Voice Test Paola · eSpeak-NG Italiano</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;max-width:720px;margin:auto;padding:24px;background:#0b1020;color:#eef2ff}
+h1{font-size:24px} textarea{width:100%;min-height:110px;box-sizing:border-box;font:inherit;padding:14px;border-radius:12px}
+button{font:inherit;font-weight:700;padding:14px 18px;margin:10px 8px 10px 0;border:0;border-radius:12px}
+#log{white-space:pre-wrap;background:#111827;padding:14px;border-radius:12px;min-height:140px;font:13px ui-monospace,monospace}
+.ok{color:#86efac}.err{color:#fca5a5}
+</style>
+</head>
+<body>
+<h1>🎙️ Test Paola + eSpeak-NG italiano</h1>
+<p>Test separato dalla palestra. Questa versione sostituisce il phonemizer inglese con eSpeak-NG WASM e forza la voce italiana <b>it</b>. Al primo avvio scarica Paola (~64 MB).</p>
+<textarea id="text">Uno. Due. Tre. Tieni i gomiti più vicini al corpo.</textarea><br>
+<button id="load">1 · CARICA PAOLA</button>
+<button id="speak" disabled>2 · PARLA</button>
+<div id="log">Pronto per il test.</div>
+<script type="module">
+import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/+esm";
+import ESpeakNg from "https://esm.sh/espeak-ng@1.0.2";
+
+const MODEL="https://huggingface.co/rhasspy/piper-voices/resolve/main/it/it_IT/paola/medium/it_IT-paola-medium.onnx";
+const CONFIG=MODEL+".json";
+ort.env.wasm.wasmPaths="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/";
+
+const logEl=document.querySelector("#log"), loadBtn=document.querySelector("#load"), speakBtn=document.querySelector("#speak");
+let session=null,cfg=null;
+function log(x,err=false){logEl.innerHTML += "\n"+(err?"❌ ":"• ")+x; logEl.scrollTop=logEl.scrollHeight}
+function idsFor(chars){
+ const m=cfg.phoneme_id_map, out=[], PAD="_",BOS="^",EOS="$";
+ const push=(k)=>{const v=m[k]; if(v!==undefined) Array.isArray(v)?out.push(...v):out.push(v)};
+ push(BOS);push(PAD);
+ for(const c of chars){ if(m[c]!==undefined){push(c);push(PAD)} }
+ push(EOS); return out;
+}
+function wavBlob(samples,sr){
+ const b=new ArrayBuffer(44+samples.length*2),v=new DataView(b);
+ const ws=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+ ws(0,"RIFF");v.setUint32(4,36+samples.length*2,true);ws(8,"WAVE");ws(12,"fmt ");
+ v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);
+ v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);ws(36,"data");v.setUint32(40,samples.length*2,true);
+ let o=44; for(let i=0;i<samples.length;i++,o+=2){let s=Math.max(-1,Math.min(1,samples[i]));v.setInt16(o,s<0?s*32768:s*32767,true)}
+ return new Blob([b],{type:"audio/wav"});
+}
+async function loadPaola(){
+ loadBtn.disabled=true; logEl.textContent="Avvio test Piper + eSpeak-NG italiano…";
+ try{
+  log("Scarico configurazione italiana…");
+  cfg=await (await fetch(CONFIG)).json();
+  log("Config OK · espeak voice: "+(cfg.espeak?.voice||"?"));
+  log("Scarico modello Paola e creo sessione ONNX…");
+  const r=await fetch(MODEL); if(!r.ok) throw new Error("download modello HTTP "+r.status);
+  const buf=await r.arrayBuffer(); log("Modello ricevuto: "+(buf.byteLength/1024/1024).toFixed(1)+" MB");
+  session=await ort.InferenceSession.create(buf,{executionProviders:["wasm"]});
+  log("ONNX PRONTO",false); speakBtn.disabled=false; loadBtn.textContent="✓ PAOLA CARICATA";
+ }catch(e){log("ERRORE CARICAMENTO: "+(e?.message||e),true);loadBtn.disabled=false}
+}
+async function speak(){
+ speakBtn.disabled=true;
+ try{
+  const text=document.querySelector("#text").value.trim(); if(!text)return;
+  log("Fonemizzazione eSpeak-NG italiana…");
+  const outName="phonemes-"+Date.now()+".txt";
+  const esc=text.replace(/\\/g,"\\\\").replace(/"/g,'\\"');
+  const espeak=await ESpeakNg({arguments:[
+    "--phonout",outName,
+    '--sep=""',
+    "-q","-b=1","--ipa=3",
+    "-v","it",
+    `"${esc}"`
+  ]});
+  const ptxt=espeak.FS.readFile(outName,{encoding:"utf8"}).trim();
+  try{espeak.FS.unlink(outName)}catch(_){}
+  if(!ptxt) throw new Error("eSpeak-NG non ha prodotto fonemi");
+  log("Fonemi IT OK · "+ptxt.slice(0,110));
+  const ids=idsFor(Array.from(ptxt.normalize("NFD")));
+  if(ids.length<4)throw new Error("nessun fonema valido");
+  log("Inferenza ONNX · "+ids.length+" token…");
+  const input={
+   input:new ort.Tensor("int64",BigInt64Array.from(ids.map(BigInt)),[1,ids.length]),
+   input_lengths:new ort.Tensor("int64",BigInt64Array.from([BigInt(ids.length)]),[1]),
+   scales:new ort.Tensor("float32",Float32Array.from([0.667,1.0,0.8]),[3])
+  };
+  if((cfg.num_speakers||1)>1) input.sid=new ort.Tensor("int64",BigInt64Array.from([0n]),[1]);
+  const t=performance.now(),res=await session.run(input);
+  log("Inferenza OK · "+((performance.now()-t)/1000).toFixed(1)+" s");
+  const samples=new Float32Array(res.output.data), blob=wavBlob(samples,cfg.audio.sample_rate);
+  const url=URL.createObjectURL(blob),a=new Audio(url);
+  a.onended=()=>URL.revokeObjectURL(url);
+  await a.play(); log("🔊 AUDIO IN RIPRODUZIONE");
+ }catch(e){log("ERRORE SINTESI: "+(e?.message||e),true)}
+ finally{speakBtn.disabled=false}
+}
+loadBtn.onclick=loadPaola;speakBtn.onclick=speak;
+</script>
+</body></html>
