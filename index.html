@@ -1,5 +1,5 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V5.2 Event Coach</title>
-<style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V5.2</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per il curl inquadrati di lato/45°. Per lo squat usa una vista laterale con il corpo intero.</div><div class="controls"><button id="start">AVVIA</button><button class="secondary" id="voice">🔊 VOCE</button><button class="secondary" id="switch">CAMERA</button><button class="secondary" id="reset">RESET</button></div><div class="voiceDebug"><h2>VOICE DEBUG · V5.2 EVENT-DRIVEN</h2><div class="voiceLine" id="vdScript">meSpeak script: …</div><div class="voiceLine" id="vdConfig">Config: …</div><div class="voiceLine" id="vdVoice">Voce italiana: …</div><div class="voiceLine" id="vdAudio">AudioContext: …</div><div class="voiceLine" id="vdPlay">Ultimo test: —</div><div class="voiceActions"><button class="secondary" id="testBeep">TEST AUDIO</button><button id="testVoice">TEST VOCE</button></div></div><div class="debug" id="debug"></div></main>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V5.3 Exercise Validation</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V5.3</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per il curl inquadrati di lato/45°. Per lo squat usa una vista laterale con il corpo intero.</div><div class="controls"><button id="start">AVVIA</button><button class="secondary" id="voice">🔊 VOCE</button><button class="secondary" id="switch">CAMERA</button><button class="secondary" id="reset">RESET</button></div><div class="voiceDebug"><h2>VOICE DEBUG · V5.3 VALIDATION</h2><div class="voiceLine" id="vdScript">meSpeak script: …</div><div class="voiceLine" id="vdConfig">Config: …</div><div class="voiceLine" id="vdVoice">Voce italiana: …</div><div class="voiceLine" id="vdAudio">AudioContext: …</div><div class="voiceLine" id="vdPlay">Ultimo test: —</div><div class="voiceActions"><button class="secondary" id="testBeep">TEST AUDIO</button><button id="testVoice">TEST VOCE</button></div></div><div class="debug" id="debug"></div></main>
 <script src="https://cdn.jsdelivr.net/gh/btopro/mespeak@master/mespeak.js"></script>
 <script type="module">
 import {PoseLandmarker,FilesetResolver,DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm";
@@ -7,6 +7,14 @@ const $=id=>document.getElementById(id), video=$("video"),canvas=$("canvas"),ctx
 const ui={status:$("status"),reps:$("reps"),phase:$("phase"),elbow:$("elbow"),side:$("side"),tempo:$("tempo"),feedback:$("feedback"),debug:$("debug"),vdScript:$("vdScript"),vdConfig:$("vdConfig"),vdVoice:$("vdVoice"),vdAudio:$("vdAudio"),vdPlay:$("vdPlay"),metricLabel:$("metricLabel"),sideLabel:$("sideLabel"),exercise:$("exercise")};
 const CFG={VIS:.48,EMA:.48,EXTENDED:150,START_CURL:138,TOP:62,TOP_FRAMES:2,EXT_FRAMES:2,MIN_REP:600,MAX_REP:7000,ELBOW_DRIFT:.13,SHOULDER_SWING:.10};
 const SQUAT={VIS:.45,EMA:.50,STAND:155,START:145,BOTTOM:105,BOTTOM_FRAMES:2,STAND_FRAMES:3,MIN_REP:700,MAX_REP:9000,TORSO_WARN:42};
+const VALIDATE={
+ CURL_MAX_UPPER_ARM_RAISE:58,     // upper arm should not point high overhead
+ CURL_MAX_ELBOW_ABOVE_SHOULDER:.025,
+ CURL_MAX_ELBOW_HIP_RATIO:.82,    // elbow should stay reasonably near torso/hip
+ CURL_BAD_HOLD_MS:500,
+ SQUAT_MAX_KNEE_TRAVEL_Y:.22
+};
+let invalidSince=0,invalidSpoken=false,squatReadyKneeY=null,squatReadyHipY=null;
 let pose,drawer,stream,running=false,facing="environment",lastVideo=-1,smElbow=null,smKnee=null,reps=0,state="GET_READY",topFrames=0,extFrames=0,bottomFrames=0,standFrames=0,repStart=0,startElbowPos=null,startShoulderPos=null,lastFeedback="",activeExercise="curl";
 // Voice Engine: TTS locale, gratuito, nessuna API e nessun MP3 preregistrato.
 let voiceEnabled=true, voiceReady=false, lastSpokenText="", lastSpokenAt=0, voiceBusy=false;
@@ -177,10 +185,41 @@ function trackingCoach(lost){
      trackingLostSpoken=true;
    }
  }else{
-   trackingLostSince=0;trackingLostSpoken=false;
+   trackingLostSince=0;trackingLostSpoken=false;invalidSince=0;invalidSpoken=false;squatReadyKneeY=null;squatReadyHipY=null;
  }
 }
 function angle2D(a,b,c){const ab=Math.atan2(a.y-b.y,a.x-b.x),cb=Math.atan2(c.y-b.y,c.x-b.x);let d=Math.abs((ab-cb)*180/Math.PI);return d>180?360-d:d} function ema(old,v,a){return old==null?v:old*a+v*(1-a)} function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function angleToVertical(a,b){
+ // 0 = segment a->b points upward, 90 = horizontal, 180 = downward
+ const dx=b.x-a.x,dy=b.y-a.y;
+ return Math.abs(Math.atan2(dx,-dy)*180/Math.PI);
+}
+function validateCurlPose(sh,el,wr,hip,stateNow){
+ const torso=Math.max(.08,dist(sh,hip));
+ const elbowHip=dist(el,hip)/torso;
+ const upperArmRaise=angleToVertical(sh,el);
+ const elbowAboveShoulder=el.y < sh.y-VALIDATE.CURL_MAX_ELBOW_ABOVE_SHOULDER;
+ // During a true curl the elbow can drift somewhat, but an overhead press
+ // raises the elbow/upper arm strongly away from the torso.
+ const overheadLike=elbowAboveShoulder || upperArmRaise<VALIDATE.CURL_MAX_UPPER_ARM_RAISE;
+ const detached=elbowHip>VALIDATE.CURL_MAX_ELBOW_HIP_RATIO;
+ const invalid=(stateNow!=="GET_READY") && (overheadLike || detached);
+ return {valid:!invalid,overheadLike,detached,upperArmRaise,elbowHip};
+}
+function invalidMovementCoach(isInvalid,text){
+ const now=performance.now();
+ if(isInvalid){
+   if(!invalidSince)invalidSince=now;
+   if(!invalidSpoken && now-invalidSince>=VALIDATE.CURL_BAD_HOLD_MS){
+     speakText(text,{priority:8,key:"wrong-exercise",cooldown:0,maxAge:2200});
+     invalidSpoken=true;
+   }
+ }else{
+   invalidSince=0;
+   invalidSpoken=false;
+ }
+}
+
 async function init(){try{const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm");const base={modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",delegate:"GPU"};try{pose=await PoseLandmarker.createFromOptions(vision,{baseOptions:base,runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5})}catch{base.delegate="CPU";pose=await PoseLandmarker.createFromOptions(vision,{baseOptions:base,runningMode:"VIDEO",numPoses:1})}drawer=new DrawingUtils(ctx);status("AI PRONTA","good")}catch(e){status("ERRORE AI","bad");fb("Errore caricamento MediaPipe: "+e.message,"bad")}}
 function stopStream(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null} async function startCamera(){if(!pose){fb("Aspetta che l'AI sia pronta.","warn");return} stopStream();try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}},audio:false});video.srcObject=stream;await video.play();video.classList.toggle("mirror",facing==="user");canvas.classList.toggle("mirror",facing==="user");running=true;status("CAMERA ATTIVA","good");requestAnimationFrame(loop)}catch(e){status("CAMERA BLOCCATA","bad");fb("Non riesco ad aprire la camera: "+e.message,"bad")}}
 function chooseSide(lm){const score=s=>[11+s,13+s,15+s,23+s].reduce((n,i)=>n+(lm[i]?.visibility||0),0);return score(0)>=score(1)?{name:"SINISTRO",sh:11,el:13,wr:15,hip:23}:{name:"DESTRO",sh:12,el:14,wr:16,hip:24}}
@@ -191,6 +230,17 @@ function analyzeCurl(lm){
  if([sh,el,wr,hip].some(p=>(p.visibility||0)<CFG.VIS)){trackingCoach(true);fb("Inquadra meglio il braccio: devo vedere spalla, gomito, polso e fianco.","warn",false);return}
  trackingCoach(false);
  let ang=angle2D(sh,el,wr);smElbow=ema(smElbow,ang,CFG.EMA);ang=smElbow;ui.elbow.textContent=Math.round(ang)+"°";
+ const validity=validateCurlPose(sh,el,wr,hip,state);
+ invalidMovementCoach(!validity.valid,"Il movimento non corrisponde a un curl. Tieni il gomito vicino al fianco.");
+ if(!validity.valid){
+   // Hard gate: a movement resembling an overhead/military press cannot
+   // advance or complete the curl state machine.
+   topFrames=0;extFrames=0;
+   if(state!=="GET_READY" && state!=="READY"){setState("GET_READY");repStart=0;startElbowPos=null;startShoulderPos=null}
+   fb(validity.overheadLike?"Movimento non valido per il curl: non sollevare il braccio verso la testa.":"Movimento non valido per il curl: tieni il gomito vicino al busto.","warn",false);
+   debug(`exercise=curl INVALID upperArm=${validity.upperArmRaise.toFixed(1)} elbowHip=${validity.elbowHip.toFixed(2)}`);
+   return;
+ }
  const torso=Math.max(.08,dist(sh,hip));const elbowDrift=startElbowPos?dist(el,startElbowPos)/torso:0;const shoulderSwing=startShoulderPos?dist(sh,startShoulderPos)/torso:0;
  ErrorCoach.update("curl-elbow",state==="CURL_UP"||state==="LOWER"?elbowDrift>CFG.ELBOW_DRIFT:false,"Tieni fermo il gomito");
  ErrorCoach.update("curl-shoulder",state==="CURL_UP"||state==="LOWER"?shoulderSwing>CFG.SHOULDER_SWING:false,"Non aiutarti con la spalla");
@@ -214,7 +264,7 @@ function analyzeSquat(lm){
  const vertical={x:hip.x,y:hip.y-1}; const torsoAngle=angle2D(vertical,hip,sh);
  ErrorCoach.update("squat-torso",state==="DESCENT"||state==="ASCENT"?torsoAngle>SQUAT.TORSO_WARN:false,"Mantieni il busto più stabile");
  if(state==="GET_READY"){
-   if(kneeAng>SQUAT.STAND){standFrames++;if(standFrames>=SQUAT.STAND_FRAMES){setState("READY");fb("Pronto. Scendi controllando il movimento.","good")}}
+   if(kneeAng>SQUAT.STAND){standFrames++;if(standFrames>=SQUAT.STAND_FRAMES){squatReadyKneeY=knee.y;squatReadyHipY=hip.y;setState("READY");fb("Pronto. Scendi controllando il movimento.","good")}}
    else{standFrames=0;fb("Mettiti in piedi e distendi le gambe per iniziare.","warn")}
  }else if(state==="READY"){
    if(kneeAng<SQUAT.START){repStart=performance.now();bottomFrames=0;setState("DESCENT");fb("Scendi con controllo.","good")}
@@ -222,7 +272,8 @@ function analyzeSquat(lm){
    if(torsoAngle>SQUAT.TORSO_WARN)fb("Mantieni il busto più stabile durante la discesa.","warn");
    else if(kneeAng>SQUAT.START+5){setState("READY");fb("Riparti dalla posizione eretta.","warn")}
    else fb("Continua a scendere.","good");
-   if(kneeAng<SQUAT.BOTTOM){bottomFrames++;if(bottomFrames>=SQUAT.BOTTOM_FRAMES){setState("BOTTOM");fb("Profondità raggiunta. Ora risali.","good")}}else bottomFrames=0;
+   const hipDrop=squatReadyHipY==null?0:hip.y-squatReadyHipY;
+   if(kneeAng<SQUAT.BOTTOM && hipDrop>.035){bottomFrames++;if(bottomFrames>=SQUAT.BOTTOM_FRAMES){setState("BOTTOM");fb("Profondità raggiunta. Ora risali.","good")}}else bottomFrames=0;
    if(performance.now()-repStart>SQUAT.MAX_REP){setState("GET_READY");fb("Ripartiamo dalla posizione eretta.","warn")}
  }else if(state==="BOTTOM"){
    if(kneeAng>SQUAT.BOTTOM+12){setState("ASCENT");fb("Risali fino a distendere le gambe.","good")}
