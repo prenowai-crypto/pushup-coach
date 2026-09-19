@@ -1,10 +1,10 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V9.1H Dual-Arm Heavy</title>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V10R Universal Body Relationship Engine</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}.recap{display:none;margin-top:12px;background:#151a21;border:1px solid #303947;border-radius:16px;padding:14px}
 .recap.show{display:block}.recap h2{margin:0 0 10px;font-size:16px}.recapTop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .recapBox{background:#10151b;border-radius:11px;padding:10px;text-align:center}.recapBox b{display:block;font-size:20px}.recapBox span{font-size:9px;color:#8e99a8}
 .recapSummary{margin:12px 0;padding:10px;background:#10151b;border-radius:11px;font-size:12px;line-height:1.45}
 .repTable{width:100%;border-collapse:collapse;font-size:10px}.repTable th,.repTable td{padding:6px 3px;border-bottom:1px solid #252c36;text-align:center}.repTable th{color:#8e99a8}
-.diag{margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.diag h2{font-size:12px;margin:0 0 8px;color:#aeb8c5}.diagGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.diagItem{background:#10151b;border-radius:10px;padding:8px}.diagItem .dlabel{font-size:9px;color:#8e99a8}.diagItem .dval{font-size:15px;font-weight:850;margin-top:2px}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V9.1H · Dual-Arm Heavy</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per Curl Advanced inquadra busto, braccio e mano: Pose + 21 landmark della mano. Per lo squat usa una vista laterale con il corpo intero.</div><div class="diag"><h2>UNIVERSAL BODY TRACKER</h2><div class="diagGrid">
+.diag{margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.diag h2{font-size:12px;margin:0 0 8px;color:#aeb8c5}.diagGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.diagItem{background:#10151b;border-radius:10px;padding:8px}.diagItem .dlabel{font-size:9px;color:#8e99a8}.diagItem .dval{font-size:15px;font-weight:850;margin-top:2px}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V10R · Universal Body + Relationships</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per Curl Advanced inquadra busto, braccio e mano: Pose + 21 landmark della mano. Per lo squat usa una vista laterale con il corpo intero.</div><div class="diag"><h2>UNIVERSAL BODY TRACKER</h2><div class="diagGrid">
 <div class="diagItem"><div class="dlabel">POSE</div><div class="dval" id="trkPose">33 punti</div></div>
 <div class="diagItem"><div class="dlabel">MANI</div><div class="dval" id="trkHands">--</div></div>
 <div class="diagItem"><div class="dlabel">PROFILO</div><div class="dval" id="trkProfile">--</div></div>
@@ -140,6 +140,46 @@ const BodyTracker={
    return bd<.20?best:null;
  }
 };
+
+// V10R: Universal Body + Relationship Engine.
+// Independent from the selected exercise; tracks both sides permanently.
+const UB_INDEX={nose:0,leftShoulder:11,rightShoulder:12,leftElbow:13,rightElbow:14,leftWrist:15,rightWrist:16,leftHip:23,rightHip:24,leftKnee:25,rightKnee:26,leftAnkle:27,rightAnkle:28,leftHeel:29,rightHeel:30,leftFoot:31,rightFoot:32};
+const UniversalBody={
+ frame:null,previous:null,history:[],maxHistory:90,
+ sub:(a,b)=>({x:a.x-b.x,y:a.y-b.y,z:(a.z||0)-(b.z||0)}),
+ mag:a=>Math.hypot(a.x,a.y,a.z||0),
+ dist(a,b){return a&&b?Math.hypot(a.x-b.x,a.y-b.y,(a.z||0)-(b.z||0)):NaN},
+ mid(a,b){return{x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:((a.z||0)+(b.z||0))/2,visibility:Math.min(a.visibility??1,b.visibility??1)}},
+ dot(a,b){return a.x*b.x+a.y*b.y+(a.z||0)*(b.z||0)},
+ angle3(a,b,c){if(!a||!b||!c)return NaN;let u=this.sub(a,b),v=this.sub(c,b),d=this.mag(u)*this.mag(v);return d?Math.acos(Math.max(-1,Math.min(1,this.dot(u,v)/d)))*180/Math.PI:NaN},
+ point(n){return this.frame?.points?.[n]||null},
+ scale(k="torso"){let f=this.frame;if(!f)return NaN;return k==="shoulder"?f.scales.shoulderWidth:k==="hip"?f.scales.hipWidth:k==="height"?f.scales.bodyHeight:f.scales.torsoLength},
+ distance(a,b,opt={}){let A=typeof a==="string"?this.point(a):a,B=typeof b==="string"?this.point(b):b,d=this.dist(A,B);if(opt.normalized===false)return d;let q=this.scale(opt.scale||"torso");return q>1e-6?d/q:NaN},
+ pointToSegmentDistance(p,a,b,opt={}){p=typeof p==="string"?this.point(p):p;a=typeof a==="string"?this.point(a):a;b=typeof b==="string"?this.point(b):b;if(!p||!a||!b)return NaN;let ab=this.sub(b,a),ap=this.sub(p,a),den=this.dot(ab,ab)||1,t=Math.max(0,Math.min(1,this.dot(ap,ab)/den)),q={x:a.x+ab.x*t,y:a.y+ab.y*t,z:(a.z||0)+(ab.z||0)*t},d=this.dist(p,q);if(opt.normalized===false)return d;let sc=this.scale(opt.scale||"shoulder");return sc>1e-6?d/sc:NaN},
+ angle(a,b,c){return this.angle3(this.point(a),this.point(b),this.point(c))},
+ velocity(n){let p=this.point(n),q=this.previous?.points?.[n],dt=this.previous?Math.max(.001,(this.frame.time-this.previous.time)/1000):0;return p&&q&&dt?{x:(p.x-q.x)/dt,y:(p.y-q.y)/dt,z:((p.z||0)-(q.z||0))/dt,speed:this.dist(p,q)/dt}:null},
+ symmetry(m){let a=this.frame?.angles,p={elbow:["leftElbow","rightElbow"],shoulder:["leftShoulder","rightShoulder"],hip:["leftHip","rightHip"],knee:["leftKnee","rightKnee"],ankle:["leftAnkle","rightAnkle"]}[m];return a&&p?Math.abs(a[p[0]]-a[p[1]]):NaN},
+ update(r,h){
+   let image=r?.landmarks?.[0];if(!image)return null;let world=r?.worldLandmarks?.[0]||null,lm=world||image,P={};
+   for(const [n,i] of Object.entries(UB_INDEX)){let x=lm[i];P[n]={x:x.x,y:x.y,z:x.z||0,visibility:x.visibility??1}}
+   P.shoulderCenter=this.mid(P.leftShoulder,P.rightShoulder);P.hipCenter=this.mid(P.leftHip,P.rightHip);P.torsoCenter=this.mid(P.shoulderCenter,P.hipCenter);P.leftHand=P.leftWrist;P.rightHand=P.rightWrist;
+   let scales={shoulderWidth:this.dist(P.leftShoulder,P.rightShoulder),hipWidth:this.dist(P.leftHip,P.rightHip),torsoLength:this.dist(P.shoulderCenter,P.hipCenter)};
+   scales.bodyHeight=this.dist(P.nose,P.hipCenter)+Math.max(this.dist(P.leftHip,P.leftAnkle),this.dist(P.rightHip,P.rightAnkle));
+   let A={leftElbow:this.angle3(P.leftShoulder,P.leftElbow,P.leftWrist),rightElbow:this.angle3(P.rightShoulder,P.rightElbow,P.rightWrist),leftShoulder:this.angle3(P.leftElbow,P.leftShoulder,P.leftHip),rightShoulder:this.angle3(P.rightElbow,P.rightShoulder,P.rightHip),leftHip:this.angle3(P.leftShoulder,P.leftHip,P.leftKnee),rightHip:this.angle3(P.rightShoulder,P.rightHip,P.rightKnee),leftKnee:this.angle3(P.leftHip,P.leftKnee,P.leftAnkle),rightKnee:this.angle3(P.rightHip,P.rightKnee,P.rightAnkle),leftAnkle:this.angle3(P.leftKnee,P.leftAnkle,P.leftFoot),rightAnkle:this.angle3(P.rightKnee,P.rightAnkle,P.rightFoot)};
+   this.previous=this.frame;this.frame={time:performance.now(),source:world?"WORLD_3D":"IMAGE_2D",points:P,image,world,hands:h?.landmarks||[],handWorld:h?.worldLandmarks||[],scales,angles:A,relations:{}};
+   let R=this.frame.relations;
+   R.leftHandToHip=this.distance("leftHand","leftHip");R.rightHandToHip=this.distance("rightHand","rightHip");
+   R.leftHandToOppositeHip=this.distance("leftHand","rightHip");R.rightHandToOppositeHip=this.distance("rightHand","leftHip");
+   R.leftElbowToTorso=this.pointToSegmentDistance("leftElbow","shoulderCenter","hipCenter");R.rightElbowToTorso=this.pointToSegmentDistance("rightElbow","shoulderCenter","hipCenter");
+   R.handDistance=this.distance("leftHand","rightHand",{scale:"shoulder"});R.footDistance=this.distance("leftFoot","rightFoot",{scale:"hip"});
+   R.leftWristToShoulder=this.distance("leftWrist","leftShoulder");R.rightWristToShoulder=this.distance("rightWrist","rightShoulder");
+   R.leftKneeToFoot=this.distance("leftKnee","leftFoot");R.rightKneeToFoot=this.distance("rightKnee","rightFoot");
+   R.elbowSymmetry=Math.abs(A.leftElbow-A.rightElbow);R.kneeSymmetry=Math.abs(A.leftKnee-A.rightKnee);
+   this.history.push({time:this.frame.time,points:P,angles:A,relations:{...R}});if(this.history.length>this.maxHistory)this.history.shift();return this.frame;
+ }
+};
+const RelationshipEngine={distance:(a,b,o)=>UniversalBody.distance(a,b,o),toTorso:(p,o)=>UniversalBody.pointToSegmentDistance(p,"shoulderCenter","hipCenter",o),angle:(a,b,c)=>UniversalBody.angle(a,b,c),velocity:n=>UniversalBody.velocity(n),symmetry:m=>UniversalBody.symmetry(m),get relations(){return UniversalBody.frame?.relations||{}},get body(){return UniversalBody.frame}};
+window.getUniversalBody=()=>UniversalBody.frame;window.getRelationshipEngine=()=>RelationshipEngine;
 
 const MotionFeatures={
  history:[],
@@ -614,7 +654,7 @@ function loop(){if(!running)return;if(video.readyState>=2&&video.currentTime!==l
   if(ExerciseEngine.current?.trackers?.includes("hands")&&handLandmarker&&now-lastHandRun>=HAND_INTERVAL_MS){
     lastHandRun=now;lastHands=handLandmarker.detectForVideo(video,now);
   }else if(!ExerciseEngine.current?.trackers?.includes("hands"))lastHands=null;
-  const bodyFrame=BodyTracker.update(r,lastHands);MotionFeatures.push(bodyFrame);
+  const bodyFrame=BodyTracker.update(r,lastHands);UniversalBody.update(r,lastHands);MotionFeatures.push(bodyFrame);
   draw(r,lastHands);analyze(r)
  }catch(e){console.error(e);debug(e.message)}
 }requestAnimationFrame(loop)}
