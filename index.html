@@ -1,10 +1,10 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V9 3D Biomechanical Body Model</title>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V10 Universal 3D Kinematic Body Engine</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}.recap{display:none;margin-top:12px;background:#151a21;border:1px solid #303947;border-radius:16px;padding:14px}
 .recap.show{display:block}.recap h2{margin:0 0 10px;font-size:16px}.recapTop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .recapBox{background:#10151b;border-radius:11px;padding:10px;text-align:center}.recapBox b{display:block;font-size:20px}.recapBox span{font-size:9px;color:#8e99a8}
 .recapSummary{margin:12px 0;padding:10px;background:#10151b;border-radius:11px;font-size:12px;line-height:1.45}
 .repTable{width:100%;border-collapse:collapse;font-size:10px}.repTable th,.repTable td{padding:6px 3px;border-bottom:1px solid #252c36;text-align:center}.repTable th{color:#8e99a8}
-.diag{margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.diag h2{font-size:12px;margin:0 0 8px;color:#aeb8c5}.diagGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.diagItem{background:#10151b;border-radius:10px;padding:8px}.diagItem .dlabel{font-size:9px;color:#8e99a8}.diagItem .dval{font-size:15px;font-weight:850;margin-top:2px}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V9 · 3D Biomechanical Body Model</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per Curl Advanced inquadra busto, braccio e mano: Pose + 21 landmark della mano. Per lo squat usa una vista laterale con il corpo intero.</div><div class="diag"><h2>UNIVERSAL BODY TRACKER</h2><div class="diagGrid">
+.diag{margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.diag h2{font-size:12px;margin:0 0 8px;color:#aeb8c5}.diagGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.diagItem{background:#10151b;border-radius:10px;padding:8px}.diagItem .dlabel{font-size:9px;color:#8e99a8}.diagItem .dval{font-size:15px;font-weight:850;margin-top:2px}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V10 · Universal 3D Kinematic Engine</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per Curl Advanced inquadra busto, braccio e mano: Pose + 21 landmark della mano. Per lo squat usa una vista laterale con il corpo intero.</div><div class="diag"><h2>UNIVERSAL BODY TRACKER</h2><div class="diagGrid">
 <div class="diagItem"><div class="dlabel">POSE</div><div class="dval" id="trkPose">33 punti</div></div>
 <div class="diagItem"><div class="dlabel">MANI</div><div class="dval" id="trkHands">--</div></div>
 <div class="diagItem"><div class="dlabel">PROFILO</div><div class="dval" id="trkProfile">--</div></div>
@@ -62,83 +62,92 @@ const V3={
  sub:(a,b)=>({x:a.x-b.x,y:a.y-b.y,z:(a.z||0)-(b.z||0)}),
  dot:(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z,
  mag:a=>Math.hypot(a.x,a.y,a.z),
+ unit(a){const m=this.mag(a)||1;return{x:a.x/m,y:a.y/m,z:a.z/m}},
  angle(a,b){const d=this.mag(a)*this.mag(b);if(!d)return NaN;return Math.acos(Math.max(-1,Math.min(1,this.dot(a,b)/d)))*180/Math.PI},
- dist:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,(a.z||0)-(b.z||0))
+ dist:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,(a.z||0)-(b.z||0)),
+ mid:(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:((a.z||0)+(b.z||0))/2})
 };
-const POSE={
- nose:0,lShoulder:11,rShoulder:12,lElbow:13,rElbow:14,lWrist:15,rWrist:16,
- lPinky:17,rPinky:18,lIndex:19,rIndex:20,lThumb:21,rThumb:22,
- lHip:23,rHip:24,lKnee:25,rKnee:26,lAnkle:27,rAnkle:28,lHeel:29,rHeel:30,lFoot:31,rFoot:32
+const POSE={nose:0,lShoulder:11,rShoulder:12,lElbow:13,rElbow:14,lWrist:15,rWrist:16,lPinky:17,rPinky:18,lIndex:19,rIndex:20,lThumb:21,rThumb:22,lHip:23,rHip:24,lKnee:25,rKnee:26,lAnkle:27,rAnkle:28,lHeel:29,rHeel:30,lFoot:31,rFoot:32};
+
+const KinematicBody={
+ previous:null, frame:null,
+ joint(lm,i,now){
+   const p=lm?.[i]; if(!p)return null;
+   const prev=this.previous?.world?.[i]||this.previous?.pose?.[i];
+   const dt=this.previous?Math.max(.001,(now-this.previous.time)/1000):0;
+   return {x:p.x,y:p.y,z:p.z||0,visibility:p.visibility??1,
+     velocity:prev&&dt?{x:(p.x-prev.x)/dt,y:(p.y-prev.y)/dt,z:((p.z||0)-(prev.z||0))/dt}:null};
+ },
+ angle(lm,a,b,c){return V3.angle(V3.sub(lm[a],lm[b]),V3.sub(lm[c],lm[b]))},
+ segment(lm,a,b){const v=V3.sub(lm[b],lm[a]);return{vector:v,direction:V3.unit(v),length:V3.mag(v)}},
+ build(poseResult,handResult){
+   const now=performance.now(),pose=poseResult?.landmarks?.[0]||null,world=poseResult?.worldLandmarks?.[0]||null;
+   const hands=handResult?.landmarks||[],handWorld=handResult?.worldLandmarks||[];
+   if(!pose)return null;
+   const lm=world||pose, source=world?"WORLD_3D":"IMAGE_2D";
+   const J={};
+   for(const [name,i] of Object.entries(POSE))J[name]=this.joint(lm,i,now);
+   const S={
+     leftUpperArm:this.segment(lm,11,13),rightUpperArm:this.segment(lm,12,14),
+     leftForearm:this.segment(lm,13,15),rightForearm:this.segment(lm,14,16),
+     leftThigh:this.segment(lm,23,25),rightThigh:this.segment(lm,24,26),
+     leftShin:this.segment(lm,25,27),rightShin:this.segment(lm,26,28),
+     shoulderLine:this.segment(lm,11,12),hipLine:this.segment(lm,23,24)
+   };
+   const A={
+     left:{elbow:this.angle(lm,11,13,15),shoulder:this.angle(lm,13,11,23),hip:this.angle(lm,11,23,25),knee:this.angle(lm,23,25,27),ankle:this.angle(lm,25,27,31)},
+     right:{elbow:this.angle(lm,12,14,16),shoulder:this.angle(lm,14,12,24),hip:this.angle(lm,12,24,26),knee:this.angle(lm,24,26,28),ankle:this.angle(lm,26,28,32)}
+   };
+   const shoulderWidth=V3.dist(lm[11],lm[12]),hipWidth=V3.dist(lm[23],lm[24]),handDistance=V3.dist(lm[15],lm[16]),footDistance=V3.dist(lm[31],lm[32]);
+   const torsoTop=V3.mid(lm[11],lm[12]),torsoBottom=V3.mid(lm[23],lm[24]),torsoVec=V3.sub(torsoTop,torsoBottom);
+   const relations={
+     shoulderWidth,hipWidth,handDistance,footDistance,
+     handShoulderRatio:shoulderWidth?handDistance/shoulderWidth:NaN,
+     footHipRatio:hipWidth?footDistance/hipWidth:NaN,
+     humerusTorso:{left:A.left.shoulder,right:A.right.shoulder},
+     symmetry:{
+       elbow:Math.abs(A.left.elbow-A.right.elbow),shoulder:Math.abs(A.left.shoulder-A.right.shoulder),
+       hip:Math.abs(A.left.hip-A.right.hip),knee:Math.abs(A.left.knee-A.right.knee)
+     }
+   };
+   const torso={vector:torsoVec,direction:V3.unit(torsoVec),length:V3.mag(torsoVec),
+     inclination:V3.angle(torsoVec,{x:0,y:-1,z:0})};
+   const view=this.detectView(pose);
+   const frame={time:now,source,pose,world,hands,handWorld,joints:J,segments:S,angles:A,relations,torso,view};
+   this.previous=this.frame; this.frame=frame; return frame;
+ },
+ detectView(p){
+   const sw=Math.abs(p[12].x-p[11].x),hw=Math.abs(p[24].x-p[23].x);
+   const torso=Math.max(.001,Math.hypot(((p[11].x+p[12].x)-(p[23].x+p[24].x))/2,((p[11].y+p[12].y)-(p[23].y+p[24].y))/2));
+   const ratio=((sw+hw)/2)/torso; let name,confidence;
+   if(ratio>.62){name="FRONTALE / POST.";confidence=Math.min(.98,.65+(ratio-.62));}
+   else if(ratio>.28){name="3/4 · 30–60°";confidence=.82;}
+   else{name="LATERALE";confidence=Math.min(.96,.70+(.28-ratio));}
+   const vis=[11,12,23,24].map(i=>p[i]?.visibility??1).reduce((a,b)=>a+b,0)/4;
+   return{name,confidence:Math.max(0,Math.min(1,confidence*Math.max(.35,vis))),ratio};
+ }
 };
+
 const BodyTracker={
  frame:null,
  update(poseResult,handResult){
-   const pose=poseResult?.landmarks?.[0]||null;
-   const world=poseResult?.worldLandmarks?.[0]||null;
-   const hands=handResult?.landmarks||[];
-   const handWorld=handResult?.worldLandmarks||[];
-   const features=pose?this.computePoseFeatures(pose,world):{};
-   const view=pose?this.detectView(pose,world):{name:"--",confidence:0};
-   this.frame={time:performance.now(),pose,world,hands,handWorld,features,view};
-   ui.trkPose.textContent=pose?"33 punti ✓":"ricerca…";
-   ui.trkHands.textContent=hands.length?`${hands.length} × 21 ✓`:(this.needsHands()?"ricerca…":"OFF");
-   ui.trkProfile.textContent=activeExercise.toUpperCase();
-   ui.trk3d.textContent=world?"WORLD ✓":"2D fallback";
-   ui.trkView.textContent=view.name;
-   ui.trkConfidence.textContent=Math.round(view.confidence*100)+"%";
+   const k=KinematicBody.build(poseResult,handResult); if(!k)return null;
+   // Backward-compatible feature facade: existing Curl/Squat stay unchanged.
+   const p=k.pose,w=k.world,f={};
+   const A=(a,b,c)=>angle2D(p[a],p[b],p[c]);
+   f.leftElbow=A(11,13,15);f.rightElbow=A(12,14,16);f.leftShoulder=A(13,11,23);f.rightShoulder=A(14,12,24);
+   f.leftHip=A(11,23,25);f.rightHip=A(12,24,26);f.leftKnee=A(23,25,27);f.rightKnee=A(24,26,28);f.leftAnkle=A(25,27,31);f.rightAnkle=A(26,28,32);
+   f.shoulderWidth=Math.hypot(p[11].x-p[12].x,p[11].y-p[12].y);f.handDistance=Math.hypot(p[15].x-p[16].x,p[15].y-p[16].y);f.handShoulderRatio=f.shoulderWidth?f.handDistance/f.shoulderWidth:NaN;
+   f.shoulderTilt=Math.atan2(p[12].y-p[11].y,p[12].x-p[11].x)*180/Math.PI;f.hipTilt=Math.atan2(p[24].y-p[23].y,p[24].x-p[23].x)*180/Math.PI;
+   f.torsoLean=Math.abs(Math.atan2(((p[11].x+p[12].x)/2)-((p[23].x+p[24].x)/2),((p[23].y+p[24].y)/2)-((p[11].y+p[12].y)/2))*180/Math.PI);
+   if(w){f.leftElbow3D=k.angles.left.elbow;f.rightElbow3D=k.angles.right.elbow;f.leftShoulder3D=k.angles.left.shoulder;f.rightShoulder3D=k.angles.right.shoulder;f.leftHip3D=k.angles.left.hip;f.rightHip3D=k.angles.right.hip;f.leftKnee3D=k.angles.left.knee;f.rightKnee3D=k.angles.right.knee;f.leftAnkle3D=k.angles.left.ankle;f.rightAnkle3D=k.angles.right.ankle;f.shoulderWidth3D=k.relations.shoulderWidth;f.handDistance3D=k.relations.handDistance;f.handShoulderRatio3D=k.relations.handShoulderRatio;f.leftHumerusTorso3D=k.relations.humerusTorso.left;f.rightHumerusTorso3D=k.relations.humerusTorso.right;}
+   this.frame={...k,features:f};
+   ui.trkPose.textContent="33 punti ✓";ui.trkHands.textContent=k.hands.length?`${k.hands.length} × 21 ✓`:(this.needsHands()?"ricerca…":"OFF");
+   ui.trkProfile.textContent=activeExercise.toUpperCase();ui.trk3d.textContent=k.world?"WORLD ✓":"2D fallback";ui.trkView.textContent=k.view.name;ui.trkConfidence.textContent=Math.round(k.view.confidence*100)+"%";
    return this.frame;
  },
  needsHands(){return ExerciseEngine.current?.trackers?.includes("hands")??false},
- angle3(lm,a,b,c){return V3.angle(V3.sub(lm[a],lm[b]),V3.sub(lm[c],lm[b]))},
- computePoseFeatures(p,w){
-   const f={}; const A=(a,b,c)=>angle2D(p[a],p[b],p[c]);
-   f.leftElbow=A(11,13,15);f.rightElbow=A(12,14,16);
-   f.leftShoulder=A(13,11,23);f.rightShoulder=A(14,12,24);
-   f.leftHip=A(11,23,25);f.rightHip=A(12,24,26);
-   f.leftKnee=A(23,25,27);f.rightKnee=A(24,26,28);
-   f.leftAnkle=A(25,27,31);f.rightAnkle=A(26,28,32);
-   f.shoulderWidth=Math.hypot(p[11].x-p[12].x,p[11].y-p[12].y);
-   f.handDistance=Math.hypot(p[15].x-p[16].x,p[15].y-p[16].y);
-   f.handShoulderRatio=f.shoulderWidth?f.handDistance/f.shoulderWidth:NaN;
-   f.shoulderTilt=Math.atan2(p[12].y-p[11].y,p[12].x-p[11].x)*180/Math.PI;
-   f.hipTilt=Math.atan2(p[24].y-p[23].y,p[24].x-p[23].x)*180/Math.PI;
-   f.torsoLean=Math.abs(Math.atan2(((p[11].x+p[12].x)/2)-((p[23].x+p[24].x)/2),
-                                  ((p[23].y+p[24].y)/2)-((p[11].y+p[12].y)/2))*180/Math.PI);
-   if(w){
-     f.leftElbow3D=this.angle3(w,11,13,15); f.rightElbow3D=this.angle3(w,12,14,16);
-     f.leftShoulder3D=this.angle3(w,13,11,23); f.rightShoulder3D=this.angle3(w,14,12,24);
-     f.leftHip3D=this.angle3(w,11,23,25); f.rightHip3D=this.angle3(w,12,24,26);
-     f.leftKnee3D=this.angle3(w,23,25,27); f.rightKnee3D=this.angle3(w,24,26,28);
-     f.leftAnkle3D=this.angle3(w,25,27,31); f.rightAnkle3D=this.angle3(w,26,28,32);
-     f.shoulderWidth3D=V3.dist(w[11],w[12]);
-     f.handDistance3D=V3.dist(w[15],w[16]);
-     f.handShoulderRatio3D=f.shoulderWidth3D?f.handDistance3D/f.shoulderWidth3D:NaN;
-     f.leftHumerusTorso3D=this.angle3(w,13,11,23);
-     f.rightHumerusTorso3D=this.angle3(w,14,12,24);
-   }
-   return f;
- },
- detectView(p,w){
-   // View-aware heuristic. It does not pretend to recover hidden anatomy:
-   // it estimates whether shoulder/hip geometry is frontal, oblique or side-like.
-   const sw=Math.abs(p[12].x-p[11].x), hw=Math.abs(p[24].x-p[23].x);
-   const torso=Math.max(.001,Math.hypot(((p[11].x+p[12].x)-(p[23].x+p[24].x))/2,
-                                      ((p[11].y+p[12].y)-(p[23].y+p[24].y))/2));
-   const ratio=((sw+hw)/2)/torso;
-   let name,conf;
-   if(ratio>.62){name="FRONTALE / POST.";conf=Math.min(.98,.65+(ratio-.62));}
-   else if(ratio>.28){name="3/4 · 30–60°";conf=.82;}
-   else{name="LATERALE";conf=Math.min(.96,.70+(.28-ratio));}
-   const vis=[11,12,23,24].map(i=>p[i]?.visibility??1).reduce((a,b)=>a+b,0)/4;
-   conf*=Math.max(.35,vis);
-   return {name,confidence:Math.max(0,Math.min(1,conf)),ratio};
- },
- closestHand(wrist){
-   if(!this.frame?.hands?.length)return null;
-   let best=null,bd=1e9;
-   for(const h of this.frame.hands){const d=Math.hypot(h[0].x-wrist.x,h[0].y-wrist.y);if(d<bd){bd=d;best=h}}
-   return bd<.20?best:null;
- }
+ closestHand(wrist){if(!this.frame?.hands?.length)return null;let best=null,bd=1e9;for(const h of this.frame.hands){const d=Math.hypot(h[0].x-wrist.x,h[0].y-wrist.y);if(d<bd){bd=d;best=h}}return bd<.20?best:null}
 };
 
 const MotionFeatures={
@@ -595,4 +604,5 @@ $("testVoice").onclick=async()=>{
 $("switch").onclick=async()=>{facing=facing==="environment"?"user":"environment";if(running){running=false;stopStream();await startCamera()}};$("reset").onclick=reset;if(!window.isSecureContext){status("HTTPS RICHIESTO","bad");fb("Apri l'app tramite HTTPS.","bad")}init();
 
 window.getBiomechanicalFrame=()=>BodyTracker.frame;
+window.getKinematicBody=()=>KinematicBody.frame;
 </script></body></html>
