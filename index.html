@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#07090d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Push-Up Coach V3</title>
+<title>Push-Up Coach V3.1 Voice</title>
 <style>
 *{box-sizing:border-box} html,body{margin:0;background:#07090d;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 body{min-height:100dvh}.app{width:min(100%,860px);margin:auto;padding:max(10px,env(safe-area-inset-top)) 10px max(16px,env(safe-area-inset-bottom))}
@@ -18,14 +18,14 @@ video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}c
 .guide{position:absolute;z-index:3;left:12px;bottom:12px;max-width:65%;background:#000b;border-radius:12px;padding:9px 10px;font-size:12px}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:8px}.card{background:#11151d;border-radius:13px;padding:9px 6px;text-align:center}.card small{display:block;color:#858c99;font-size:9px;text-transform:uppercase}.card b{display:block;font-size:19px;margin-top:3px}
 .feedback{margin-top:8px;background:#11151d;border-radius:13px;padding:13px;min-height:48px;font-size:14px}.good{border-left:4px solid #3cdb78}.warn{border-left:4px solid #ffb02e}.bad{border-left:4px solid #ff5050}
-.controls{display:grid;grid-template-columns:2fr 1fr 1fr;gap:7px;margin-top:8px}button{border:0;border-radius:13px;min-height:49px;font-weight:800;font-size:14px;touch-action:manipulation}#start{background:#fff;color:#000}#switch,#reset{background:#1d2431;color:#fff}
+.controls{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:7px;margin-top:8px}button{border:0;border-radius:13px;min-height:49px;font-weight:800;font-size:14px;touch-action:manipulation}#start{background:#fff;color:#000}#switch,#voice,#reset{background:#1d2431;color:#fff}
 .debug{margin-top:8px;padding:9px;background:#0d1016;border-radius:10px;color:#9ca4b2;font:11px ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.45}
 @media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}}
 @media(orientation:landscape) and (max-height:650px){.stage{aspect-ratio:16/9;max-height:63dvh}}
 </style>
 </head>
 <body><div class="app">
-<header><h1>Push-Up Coach V3</h1><div id="status" class="pill">Pronto</div></header>
+<header><h1>Push-Up Coach V3.1 Voice</h1><div id="status" class="pill">Pronto</div></header>
 <div class="stage">
 <video id="video" playsinline muted autoplay></video><canvas id="canvas"></canvas>
 <div class="top"><div id="phase" class="badge">GET READY</div><div id="fps" class="badge">0 FPS</div></div>
@@ -39,8 +39,8 @@ video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}c
 <div class="card"><small>Tempo rep</small><b id="tempo">--</b></div>
 </div>
 <div id="feedback" class="feedback">Premi AVVIA e consenti la fotocamera.</div>
-<div class="controls"><button id="start">AVVIA</button><button id="switch">CAMERA</button><button id="reset">RESET</button></div>
-<div id="debug" class="debug">V3 • attesa avvio</div>
+<div class="controls"><button id="start">AVVIA</button><button id="switch">CAMERA</button><button id="voice">🔊 VOCE</button><button id="reset">RESET</button></div>
+<div id="debug" class="debug">V3.1 Voice • attesa avvio</div>
 </div>
 <script type="module">
 import {PoseLandmarker,FilesetResolver,DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm";
@@ -57,6 +57,36 @@ const C={
 let pose=null,drawer=null,stream=null,running=false,facing="environment",lastVideo=-1;
 let reps=0,state="GET_READY",smoothElbow=null,smoothBody=null,downFrames=0,upFrames=0,readyFrames=0;
 let repStart=0,bottomAt=0,minElbow=180,fullDepth=false,frames=0,fpsT=performance.now();
+
+
+let voiceEnabled=true,lastSpoken=new Map();
+const numberWords=["zero","uno","due","tre","quattro","cinque","sei","sette","otto","nove","dieci","undici","dodici","tredici","quattordici","quindici","sedici","diciassette","diciotto","diciannove","venti"];
+
+function speak(text,key=text,cooldown=1800,force=false){
+  if(!voiceEnabled || !("speechSynthesis" in window)) return;
+  const now=performance.now(),prev=lastSpoken.get(key)||0;
+  if(!force && now-prev<cooldown)return;
+  lastSpoken.set(key,now);
+  // Cancel stale coaching so the newest important cue is heard promptly.
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang="it-IT"; u.rate=1.06; u.pitch=1; u.volume=1;
+  const voices=window.speechSynthesis.getVoices();
+  const it=voices.find(v=>/^it(-|_)/i.test(v.lang));
+  if(it)u.voice=it;
+  window.speechSynthesis.speak(u);
+}
+function sayRep(n){
+  const spoken=n<numberWords.length?numberWords[n]:String(n);
+  speak(spoken,"rep-"+n,0,true);
+}
+function primeVoice(){
+  if(!("speechSynthesis" in window))return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance("Voce attiva");
+  u.lang="it-IT";u.volume=.01;u.rate=1.1;
+  window.speechSynthesis.speak(u);
+}
 
 function status(t,c=""){ui.status.textContent=t;ui.status.className="pill "+c}
 function feedback(t,c=""){ui.feedback.textContent=t;ui.feedback.className="feedback "+c}
@@ -89,6 +119,7 @@ async function initPose(){
 }
 async function startCamera(){
   try{
+    primeVoice();
     $("start").disabled=true;$("start").textContent="CARICAMENTO...";
     await initPose();
     if(!navigator.mediaDevices?.getUserMedia)throw new Error("Fotocamera browser non disponibile.");
@@ -123,7 +154,7 @@ function updateFSM(elbow,body){
   const now=performance.now();
   // Reacquire valid start position. We don't reset a rep merely because body angle dips during movement.
   if(["GET_READY","NO_BODY","TRACKING"].includes(state)){
-    if(body>C.READY_BODY && elbow>C.UP){readyFrames++; if(readyFrames>=C.READY_FRAMES){setState("READY");feedback("Pronto. Scendi fino a portare il gomito sotto ~95°.","good");}}
+    if(body>C.READY_BODY && elbow>C.UP){readyFrames++; if(readyFrames>=C.READY_FRAMES){setState("READY");feedback("Pronto. Scendi fino a portare il gomito sotto ~95°.","good");speak("Posizione corretta. Vai.","ready",5000);}}
     else{readyFrames=0;feedback(body<=C.READY_BODY?"Allinea spalle, anche e caviglie.":"Distendi le braccia per iniziare.","warn")}
     return;
   }
@@ -134,9 +165,9 @@ function updateFSM(elbow,body){
   if(state==="DESCENT"){
     minElbow=Math.min(minElbow,elbow);ui.depth.textContent=Math.round(minElbow)+"°";
     if(elbow<C.DOWN){downFrames++}else{downFrames=0}
-    if(downFrames>=C.DOWN_FRAMES){fullDepth=true;bottomAt=now;setState("BOTTOM");feedback("Profondità raggiunta. Risali!","good");return}
+    if(downFrames>=C.DOWN_FRAMES){fullDepth=true;bottomAt=now;setState("BOTTOM");feedback("Profondità raggiunta. Risali!","good");speak("Sali","sali",1400);return}
     // Turned around early: still allow ascent, but it will not count.
-    if(elbow>minElbow+15){bottomAt=now;setState("ASCENT");feedback("Stai risalendo: per contare devi scendere sotto ~95°.","warn")}
+    if(elbow>minElbow+15){bottomAt=now;setState("ASCENT");feedback("Stai risalendo: per contare devi scendere sotto ~95°.","warn");speak("Scendi di più","depth",2200)}
     return;
   }
   if(state==="BOTTOM"){
@@ -149,10 +180,10 @@ function updateFSM(elbow,body){
     if(upFrames>=C.UP_FRAMES){
       const dur=now-repStart;
       if(fullDepth && dur>=C.MIN_REP_MS && dur<=C.MAX_REP_MS){
-        reps++;ui.reps.textContent=reps;ui.tempo.textContent=(dur/1000).toFixed(1)+"s";
-        feedback(body<C.GOOD_BODY?`Rep ${reps} ✓ — prova a mantenere il corpo più allineato.`:`Rep ${reps} ✓` ,body<C.GOOD_BODY?"warn":"good");
+        reps++;ui.reps.textContent=reps;ui.tempo.textContent=(dur/1000).toFixed(1)+"s";sayRep(reps);
+        feedback(body<C.GOOD_BODY?`Rep ${reps} ✓ — prova a mantenere il corpo più allineato.`:`Rep ${reps} ✓` ,body<C.GOOD_BODY?"warn":"good");if(body<C.GOOD_BODY){setTimeout(()=>speak("Mantieni il corpo allineato","body",3500),650);}
       }else{
-        feedback(fullDepth?"Movimento troppo breve/lungo: rep non contata.":"Rep non contata: profondità insufficiente.","warn");
+        feedback(fullDepth?"Movimento troppo breve o lungo: rep non contata.":"Rep non contata: profondità insufficiente.","warn");speak(fullDepth?"Ripetizione non valida":"Scendi di più","invalid",2200);
       }
       setState("READY");repStart=0;bottomAt=0;minElbow=180;fullDepth=false;downFrames=0;upFrames=0;ui.depth.textContent="--°";
     }
@@ -171,6 +202,12 @@ function resetAll(){reps=0;ui.reps.textContent="0";ui.tempo.textContent="--";ui.
 $("start").addEventListener("click",startCamera);
 $("switch").addEventListener("click",async()=>{facing=facing==="environment"?"user":"environment";if(running){running=false;stopStream();await startCamera()}});
 $("reset").addEventListener("click",resetAll);
+$("voice").addEventListener("click",()=>{
+  voiceEnabled=!voiceEnabled;
+  $("voice").textContent=voiceEnabled?"🔊 VOCE":"🔇 MUTO";
+  if(voiceEnabled){primeVoice();speak("Voce attiva","voice-toggle",0,true)}
+  else if("speechSynthesis" in window){window.speechSynthesis.cancel()}
+});
 if(!window.isSecureContext){status("HTTPS richiesto","err");feedback("Apri l'app tramite HTTPS.","bad")}
 </script>
 </body></html>
