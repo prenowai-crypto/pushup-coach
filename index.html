@@ -1,4 +1,4 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V10R.2 Visual Relationship Debugger</title>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V10R.3 Debug Session Recap</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}.recap{display:none;margin-top:12px;background:#151a21;border:1px solid #303947;border-radius:16px;padding:14px}
 .recap.show{display:block}.recap h2{margin:0 0 10px;font-size:16px}.recapTop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .recapBox{background:#10151b;border-radius:11px;padding:10px;text-align:center}.recapBox b{display:block;font-size:20px}.recapBox span{font-size:9px;color:#8e99a8}
@@ -9,7 +9,7 @@
 color:#fff;padding:9px 11px;border-radius:10px;font:700 13px/1.45 system-ui;pointer-events:none;
 backdrop-filter:blur(4px);min-width:190px}
 #relTelemetry .l{color:#62e6a7} #relTelemetry .r{color:#ffd166}
-</style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V10R.2 · Visual Relationship Debugger</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div id="relTelemetry">
+</style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V10R.3 · Debug Session Recap</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div id="relTelemetry">
 <div style="margin-bottom:5px">RELATIONSHIP DEBUG</div>
 <select id="relSelect" style="font:inherit;max-width:180px;margin-bottom:5px">
 <option value="handHip">Mano → bacino</option>
@@ -736,4 +736,73 @@ $("testVoice").onclick=async()=>{
 $("switch").onclick=async()=>{facing=facing==="environment"?"user":"environment";if(running){running=false;stopStream();await startCamera()}};$("reset").onclick=reset;if(!window.isSecureContext){status("HTTPS RICHIESTO","bad");fb("Apri l'app tramite HTTPS.","bad")}init();
 
 window.getBiomechanicalFrame=()=>BodyTracker.frame;
-</script></body></html>
+
+// === V10R.3 DEBUG SESSION RECAP ========================================
+const DebugSession={
+ start:performance.now(), samples:[],
+ push(){
+  const f=UniversalBody.frame;if(!f)return;const r=f.relations,a=f.angles;
+  this.samples.push({t:performance.now(),
+   lh:r.leftHandToHip,rh:r.rightHandToHip,
+   le:r.leftElbowToTorso,re:r.rightElbowToTorso,
+   lw:r.leftWristToShoulder,rw:r.rightWristToShoulder,
+   hd:r.handDistance,fd:r.footDistance,
+   lk:r.leftKneeToFoot,rk:r.rightKneeToFoot,
+   ea:r.elbowSymmetry,ka:r.kneeSymmetry,
+   la:a.leftElbow,ra:a.rightElbow
+  });
+  if(this.samples.length>18000)this.samples.shift();
+ },
+ reset(){this.samples=[];this.start=performance.now()},
+ stats(key){
+  const v=this.samples.map(x=>x[key]).filter(Number.isFinite);
+  if(!v.length)return null;const sum=v.reduce((a,b)=>a+b,0);
+  return{min:Math.min(...v),max:Math.max(...v),avg:sum/v.length,last:v[v.length-1]};
+ },
+ row(name,lkey,rkey,unit="× torso"){
+  const L=this.stats(lkey),R=this.stats(rkey),f=x=>x?`${x.min.toFixed(3)} – ${x.max.toFixed(3)} · media ${x.avg.toFixed(3)}`:"--";
+  return `<tr><td>${name}</td><td>${f(L)}</td><td>${f(R)}</td><td>${unit}</td></tr>`;
+ },
+ render(){
+  const sec=Math.max(0,(performance.now()-this.start)/1000), n=this.samples.length;
+  const E=this.stats("ea"),K=this.stats("ka"),H=this.stats("hd"),F=this.stats("fd");
+  const f=x=>x?`${x.min.toFixed(3)} – ${x.max.toFixed(3)} · media ${x.avg.toFixed(3)}`:"--";
+  return `<div style="font-size:18px;margin:12px 0"><b>Durata:</b> ${sec.toFixed(1)} s · <b>campioni:</b> ${n}</div>
+  <div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:16px">
+   <thead><tr><th style="text-align:left">Relazione</th><th>SX min–max · media</th><th>DX min–max · media</th><th>Scala</th></tr></thead>
+   <tbody>
+    ${this.row("Mano → bacino","lh","rh")}
+    ${this.row("Gomito → torso","le","re","× spalle")}
+    ${this.row("Polso → spalla","lw","rw")}
+    ${this.row("Ginocchio → piede","lk","rk")}
+    ${this.row("Angolo gomito","la","ra","gradi")}
+   </tbody>
+  </table></div>
+  <hr style="opacity:.2;margin:16px 0">
+  <div><b>Distanza mani:</b> ${f(H)} × spalle</div>
+  <div><b>Distanza piedi:</b> ${f(F)} × anche</div>
+  <div><b>Differenza angolo gomiti:</b> ${f(E)}°</div>
+  <div><b>Differenza angolo ginocchia:</b> ${f(K)}°</div>
+  <p style="opacity:.75">Per validare il tracker guarda soprattutto se SX/DX e min/max corrispondono ai movimenti che hai eseguito.</p>`;
+ }
+};
+setInterval(()=>{if(running&&UniversalBody.frame)DebugSession.push()},100);
+document.getElementById("debugRecapBtn").onclick=()=>{
+ document.getElementById("debugRecapContent").innerHTML=DebugSession.render();
+ document.getElementById("debugRecapModal").style.display="block";
+};
+document.getElementById("debugClose").onclick=()=>document.getElementById("debugRecapModal").style.display="none";
+document.getElementById("debugReset").onclick=()=>{DebugSession.reset();document.getElementById("debugRecapContent").innerHTML=DebugSession.render()};
+</script>
+<button id="debugRecapBtn" style="position:fixed;right:14px;bottom:14px;z-index:30;padding:12px 16px;border:0;border-radius:12px;font-weight:800;cursor:pointer">📊 RECAP DEBUG</button>
+<div id="debugRecapModal" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.86);padding:18px;overflow:auto">
+ <div style="max-width:760px;margin:auto;background:#151b22;color:white;border-radius:16px;padding:18px;font-family:system-ui">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+   <h2 style="margin:0">Recap Body Debug</h2><button id="debugClose" style="font-size:22px">✕</button>
+  </div>
+  <p style="opacity:.8">Statistiche raccolte durante la sessione. Distanze normalizzate sul corpo.</p>
+  <div id="debugRecapContent"></div>
+  <button id="debugReset" style="margin-top:12px;padding:10px 14px;font-weight:800">AZZERA DEBUG</button>
+ </div>
+</div>
+</body></html>
