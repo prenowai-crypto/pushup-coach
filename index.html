@@ -1,13 +1,10 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V6.3 Piper Self Hosted Runtime</title>
-<style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V6.3</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per il curl inquadrati di lato/45°. Per lo squat usa una vista laterale con il corpo intero.</div><div class="controls"><button id="start">AVVIA</button><button class="secondary" id="voice">🔊 VOCE</button><button class="secondary" id="switch">CAMERA</button><button class="secondary" id="reset">RESET</button></div><div class="voiceDebug"><h2>VOICE DEBUG · V6.3 PIPER</h2><div class="voiceLine" id="vdScript">meSpeak script: …</div><div class="voiceLine" id="vdConfig">Config: …</div><div class="voiceLine" id="vdVoice">Voce italiana: …</div><div class="voiceLine" id="vdAudio">AudioContext: …</div><div class="voiceLine" id="vdPlay">Ultimo test: —</div><div class="voiceActions"><button class="secondary" id="testBeep">TEST AUDIO</button><button id="testVoice">TEST VOCE</button></div></div><div class="debug" id="debug"></div></main>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V6.4 Piper RealTimeX</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V6.4</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per il curl inquadrati di lato/45°. Per lo squat usa una vista laterale con il corpo intero.</div><div class="controls"><button id="start">AVVIA</button><button class="secondary" id="voice">🔊 VOCE</button><button class="secondary" id="switch">CAMERA</button><button class="secondary" id="reset">RESET</button></div><div class="voiceDebug"><h2>VOICE DEBUG · V6.4 PIPER REALTIMEX</h2><div class="voiceLine" id="vdScript">meSpeak script: …</div><div class="voiceLine" id="vdConfig">Config: …</div><div class="voiceLine" id="vdVoice">Voce italiana: …</div><div class="voiceLine" id="vdAudio">AudioContext: …</div><div class="voiceLine" id="vdPlay">Ultimo test: —</div><div class="voiceActions"><button class="secondary" id="testBeep">TEST AUDIO</button><button id="testVoice">TEST VOCE</button></div></div><div class="debug" id="debug"></div></main>
 <script src="https://cdn.jsdelivr.net/gh/btopro/mespeak@master/mespeak.js"></script>
 <script type="module">
-import * as piperTTS from "https://esm.sh/@mintplex-labs/piper-tts-web@1.0.5";
 import {PoseLandmarker,FilesetResolver,DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm";
-let piperReady=false;
-let piperLoading=false;
-let piperAudio=null;
-let piperURL=null;
+import { TtsSession } from "https://esm.sh/@realtimex/piper-tts-web@1.1.1";
+let piperSession=null, piperReady=false, piperLoading=false, piperAudio=null, piperURL=null;
 const PIPER_VOICE="it_IT-paola-medium";
 
 const $=id=>document.getElementById(id), video=$("video"),canvas=$("canvas"),ctx=canvas.getContext("2d");
@@ -171,48 +168,40 @@ async function initVoice(){
   }
 }
 
-async function configurePiperRuntime(){
- const base=new URL("./ort/",location.href).href;
- const phenBase=new URL("./piper/",location.href).href;
- // piper-tts-web forks expose path configuration under one of these APIs
- // depending on build. Try supported/exported forms without breaking older builds.
- if(typeof piperTTS.setWasmPaths==="function") await piperTTS.setWasmPaths(base);
- if(typeof piperTTS.setOrtWasmPaths==="function") await piperTTS.setOrtWasmPaths(base);
- if(typeof piperTTS.setPhonemizerPaths==="function") await piperTTS.setPhonemizerPaths(phenBase);
- return {base,phenBase};
-}
 async function initPiper(){
- const paths=await configurePiperRuntime();
- vline(ui.vdPlay,"Runtime",paths.base,true);
- vline(ui.vdPlay,"Piper module",`voices=${typeof piperTTS.voices} predict=${typeof piperTTS.predict} download=${typeof piperTTS.download}`,true);
- if(piperReady||piperLoading)return piperReady;
+ if(piperReady)return true;
+ if(piperLoading)return false;
  piperLoading=true;
  try{
-  vline(ui.vdPlay,"Piper","controllo voce italiana Paola…",true);
-  const voices=await piperTTS.voices();
-  const ok=voices && (voices[PIPER_VOICE] || (Array.isArray(voices)&&voices.some(v=>v.key===PIPER_VOICE||v.id===PIPER_VOICE)));
-  if(!ok)throw new Error("it_IT-paola-medium non presente nel catalogo Piper");
-  const stored=await piperTTS.stored();
-  if(!stored.includes(PIPER_VOICE)){
-   await piperTTS.download(PIPER_VOICE,p=>{
-    if(p?.total){
+  vline(ui.vdPlay,"Piper","inizializzazione RealTimeX 1.1.1…",true);
+  piperSession=new TtsSession({
+   voiceId:PIPER_VOICE,
+   allowLocalModels:true,
+   fallbackStrategy:"cdn",
+   progress:(p)=>{
+    if(p && p.total){
      const pc=Math.min(100,Math.round(p.loaded*100/p.total));
-     vline(ui.vdPlay,"Piper",`download Paola ${pc}%`,true);
+     vline(ui.vdPlay,"Piper",`download ${pc}%`,true);
     }
-   });
-  }
+   },
+   logger:(m)=>vline(ui.vdPlay,"Piper",String(m),true)
+  });
+  // Warm-up: this forces runtime/model loading now, while the user sees progress.
+  const wav=await piperSession.predict("Pronto.");
+  if(!(wav instanceof Blob)) throw new Error("Piper non ha restituito audio");
   piperReady=true;
-  vline(ui.vdPlay,"Piper","pronto · Paola italiana",true);
+  vline(ui.vdPlay,"Piper","PRONTO · Paola italiana",true);
   return true;
  }catch(e){
   piperReady=false;
+  piperSession=null;
   vline(ui.vdPlay,"Piper","ERRORE: "+(e?.message||e),false);
   return false;
  }finally{piperLoading=false}
 }
 async function playPiper(text){
- if(!piperReady)throw new Error("Piper non pronto");
- const wav=await piperTTS.predict({text,voiceId:PIPER_VOICE});
+ if(!piperReady||!piperSession)throw new Error("Piper non pronto");
+ const wav=await piperSession.predict(text);
  if(piperURL)URL.revokeObjectURL(piperURL);
  piperURL=URL.createObjectURL(wav);
  piperAudio=new Audio(piperURL);
@@ -237,7 +226,7 @@ const VoiceManager={
   this.busy=true;
   try{
    if(piperReady){
-    vline(ui.vdPlay,"Voce","Piper Paola: "+item.text,true);
+    vline(ui.vdPlay,"Voce","Piper: "+item.text,true);
     await playPiper(item.text);
     this.busy=false;setTimeout(()=>this.pump(),100);return;
    }
@@ -421,8 +410,8 @@ $("voice").onclick=()=>{voiceEnabled=!voiceEnabled;$("voice").textContent=voiceE
 $("testBeep").onclick=async()=>{ui.vdPlay.textContent="Ultimo test: test audio…";await audioBeep()};
 $("testVoice").onclick=async()=>{
  try{
-  if(!piperReady)await initPiper();
-  if(piperReady){await playPiper("Ciao. Sono Paola. Il coach vocale è pronto.");return}
+  const ok=piperReady || await initPiper();
+  if(ok){await playPiper("Ciao. Sono Paola. Il coach vocale è pronto.");return}
   speakText("Test voce italiana",{force:true,key:"manual-test",cooldown:0});
  }catch(e){vline(ui.vdPlay,"Test Piper","errore: "+(e?.message||e),false)}
 };
