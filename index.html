@@ -9,7 +9,7 @@
 color:#fff;padding:9px 11px;border-radius:10px;font:700 13px/1.45 system-ui;pointer-events:none;
 backdrop-filter:blur(4px);min-width:190px}
 #relTelemetry .l{color:#62e6a7} #relTelemetry .r{color:#ffd166}
-</style></head><body><main class="app"><div class="top"><h1>🧠 AI Gym Coach · Core V1 + Curl V1</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise" disabled><option value="curl">Bicep Curl · V1</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div id="relTelemetry">
+</style></head><body><main class="app"><div class="top"><h1>🧠 AI Gym Coach · Core V1.1 Exercise Bridge</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise" disabled><option>CORE BODY ENGINE · nessun esercizio</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div id="relTelemetry">
 <div style="margin-bottom:5px">RELATIONSHIP DEBUG</div>
 <select id="relSelect" style="font:inherit;max-width:180px;margin-bottom:5px">
 <option value="handHip">Mano → bacino</option>
@@ -48,7 +48,6 @@ backdrop-filter:blur(4px);min-width:190px}
 <script type="module">
 import {PoseLandmarker,HandLandmarker,FilesetResolver,DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm";
 import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/+esm";
-import {CURL_PROFILE,createCurlExercise} from "./exercises/curl.js";
 const $=id=>document.getElementById(id), video=$("video"),canvas=$("canvas"),ctx=canvas.getContext("2d");
 const ui={status:$("status"),reps:$("reps"),phase:$("phase"),elbow:$("elbow"),side:$("side"),tempo:$("tempo"),feedback:$("feedback"),debug:$("debug"),vdScript:$("vdScript"),vdConfig:$("vdConfig"),vdVoice:$("vdVoice"),vdAudio:$("vdAudio"),vdPlay:$("vdPlay"),metricLabel:$("metricLabel"),sideLabel:$("sideLabel"),exercise:$("exercise"),dTorso:$("dTorso"),dElbowDrift:$("dElbowDrift"),dShoulder:$("dShoulder"),dHand:$("dHand"),dWrist:$("dWrist"),dPalm:$("dPalm"),curlDiag:$("curlDiag"),sessionRecap:$("sessionRecap"),rReps:$("rReps"),rTime:$("rTime"),rClean:$("rClean"),rSummary:$("rSummary"), rRows:$("rRows"),rVelocity:$("rVelocity"),loadKg:$("loadKg"),targetReps:$("targetReps"),dVelocity:$("dVelocity"),trkPose:$("trkPose"),trkHands:$("trkHands"),trkProfile:$("trkProfile"),trk3d:$("trk3d"),trkView:$("trkView"),trkConfidence:$("trkConfidence"),rCoach:$("rCoach")};
 // CORE V1 — nessun profilo o soglia di esercizio.
@@ -76,7 +75,7 @@ const BodyTracker={
    this.frame={time:performance.now(),pose,world,hands,handWorld,features,view};
    ui.trkPose.textContent=pose?"33 punti ✓":"ricerca…";
    ui.trkHands.textContent=hands.length?`${hands.length} × 21 ✓`:(this.needsHands()?"ricerca…":"OFF");
-   ui.trkProfile.textContent="CURL V1";
+   ui.trkProfile.textContent="CORE";
    ui.trk3d.textContent=world?"WORLD ✓":"2D fallback";
    ui.trkView.textContent=view.name;
    ui.trkConfidence.textContent=Math.round(view.confidence*100)+"%";
@@ -529,33 +528,43 @@ function drawRelationshipDebug(){
    const tc=mid(sc,hc);line(P("leftElbow"),tc,"SX "+fmt(R.leftElbowToTorso));line(P("rightElbow"),tc,"DX "+fmt(R.rightElbowToTorso));
  }
 }
-let curlView={total:0,left:0,right:0,leftPhase:"READY",rightPhase:"READY",leftAngle:null,rightAngle:null,lastMs:0};
-const curlExercise=createCurlExercise({
- onUpdate:v=>{curlView={...curlView,...v};},
- onRep:e=>{
-   reps=e.total;
-   speakText(String(e.total),{priority:2,key:"rep-"+e.total,cooldown:100});
- },
- onFeedback:m=>fb(m.text||String(m),m.level||"warn",false)
-});
+// ===== GENERIC EXERCISE BRIDGE =====
+const ExerciseBridge=(()=>{
+ let current=null,lastError="";
+ return Object.freeze({
+  register(exercise){
+   if(!exercise||typeof exercise.id!=="string"||typeof exercise.analyze!=="function") throw new Error("Exercise module non valido");
+   current=exercise;lastError="";
+   if(typeof current.reset==="function")current.reset();
+   ui.trkProfile.textContent=(current.name||current.id).toUpperCase();
+   return true;
+  },
+  unregister(){if(current&&typeof current.dispose==="function")current.dispose();current=null;lastError="";ui.trkProfile.textContent="CORE"},
+  analyze(frame){
+   if(!current)return null;
+   try{return current.analyze(frame)||null}
+   catch(err){lastError=String(err?.message||err);console.error("ExerciseBridge:",err);return {error:lastError}}
+  },
+  reset(){if(current&&typeof current.reset==="function")current.reset()},
+  get id(){return current?.id||null}, get error(){return lastError}, get current(){return current}
+ });
+})();
+window.ExerciseBridge=ExerciseBridge;
 
 function analyze(r){
  if(!r.landmarks?.length){
-  trackingCoach(true);ui.phase.textContent="TRACKING";return;
+  trackingCoach(true); ui.phase.textContent="TRACKING";
+  fb("Inquadra il corpo: stiamo validando solo il motore biometrico.","warn",false); return;
  }
  trackingCoach(false);
+ ui.phase.textContent=ExerciseBridge.id?(exerciseResult?.phase||"EXERCISE LIVE"):"CORE LIVE"; ui.reps.textContent="—"; ui.tempo.textContent="—";
+ ui.elbow.textContent="—"; ui.side.textContent="SX / DX";
  const f=UniversalBiomechanics.frame;
- if(!f)return;
- curlExercise.analyze(f);
- ui.reps.textContent=String(curlView.total);
- ui.phase.textContent=`SX ${curlView.leftPhase} · DX ${curlView.rightPhase}`;
- ui.side.textContent=`SX ${curlView.left} · DX ${curlView.right}`;
- const la=Number.isFinite(curlView.leftAngle)?Math.round(curlView.leftAngle):null;
- const ra=Number.isFinite(curlView.rightAngle)?Math.round(curlView.rightAngle):null;
- ui.elbow.textContent=`${la??"--"}° / ${ra??"--"}°`;
- ui.tempo.textContent=curlView.lastMs?`${(curlView.lastMs/1000).toFixed(1)}s`:"--";
- const c=f.confidence||{};
- debug(`CURL V1 LOADED ✓ | SX=${curlView.left} DX=${curlView.right} | conf SX ${Math.round((c.leftArm||0)*100)}% DX ${Math.round((c.rightArm||0)*100)}%`);
+ const exerciseResult=ExerciseBridge.analyze(f);
+ if(f?.confidence){
+  const c=f.confidence;
+  debug(`CORE V1.1 · BRIDGE ${ExerciseBridge.id?"LOADED: "+ExerciseBridge.id:"READY"} | torso=${Math.round((c.torso||0)*100)}% | armSX=${Math.round((c.leftArm||0)*100)}% | armDX=${Math.round((c.rightArm||0)*100)}% | legSX=${Math.round((c.leftLeg||0)*100)}% | legDX=${Math.round((c.rightLeg||0)*100)}%`);
+ } else debug(`CORE V1.1 · BRIDGE ${ExerciseBridge.id?"LOADED: "+ExerciseBridge.id:"READY"}${ExerciseBridge.error?" · ERROR "+ExerciseBridge.error:""}`);
 }
 function loop(){if(!running)return;if(video.readyState>=2&&video.currentTime!==lastVideo){
  lastVideo=video.currentTime;
@@ -590,12 +599,13 @@ MotionFeatures.push(bodyFrame);drawRelationshipDebug();
 function reset(){
  if(typeof VoiceManager!=="undefined")VoiceManager.reset();
  if(typeof ErrorCoach!=="undefined")ErrorCoach.clear();
- trackingLostSince=0;trackingLostSpoken=false;lastHands=null;lastHandRun=0;MotionFeatures.clear();curlExercise.reset();reps=0;
- ui.reps.textContent="0";ui.tempo.textContent="—";ui.elbow.textContent="—° / —°";ui.side.textContent="SX 0 · DX 0";ui.phase.textContent="CURL READY";
- fb("Core V1 + Curl V1 pronto. Testa prima il conteggio SX/DX.","good",false);
+ ExerciseBridge.reset();
+ trackingLostSince=0;trackingLostSpoken=false;lastHands=null;lastHandRun=0;MotionFeatures.clear();
+ ui.reps.textContent="—";ui.tempo.textContent="—";ui.elbow.textContent="—";ui.side.textContent="SX / DX";ui.phase.textContent="CORE READY";
+ fb("Core V1 pronto. Nessun esercizio è caricato.","good",false);
 }
 $("start").onclick=startCamera;
-$("finishSession").onclick=()=>{if(running){running=false;stopStream();status("SESSIONE CURL TERMINATA","good")}fb("Sessione Curl terminata.","good",false)};
+$("finishSession").onclick=()=>{if(running){running=false;stopStream();status("TEST CORE TERMINATO","good")}fb("Test Core terminato.","good",false)};
 $("voice").onclick=()=>{voiceEnabled=!voiceEnabled;$("voice").textContent=voiceEnabled?"🔊 VOCE":"🔇 MUTO";if(!voiceEnabled&&typeof VoiceManager!=="undefined")VoiceManager.reset();else if(voiceReady)speakText("Voce attiva",{force:true});else fb("La voce italiana si sta ancora caricando. Riprova tra qualche secondo.","warn",false)};
 $("testBeep").onclick=async()=>{ui.vdPlay.textContent="Ultimo test: test audio…";await audioBeep()};
 $("testVoice").onclick=async()=>{
