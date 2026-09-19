@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Voice Test Paola · Piper Direct</title>
+<title>Voice Test Paola · eSpeak-NG Italiano</title>
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;max-width:720px;margin:auto;padding:24px;background:#0b1020;color:#eef2ff}
 h1{font-size:24px} textarea{width:100%;min-height:110px;box-sizing:border-box;font:inherit;padding:14px;border-radius:12px}
@@ -13,15 +13,15 @@ button{font:inherit;font-weight:700;padding:14px 18px;margin:10px 8px 10px 0;bor
 </style>
 </head>
 <body>
-<h1>🎙️ Test voce italiana Paola</h1>
-<p>Test separato dalla palestra. Al primo avvio deve scaricare il modello (~64 MB). Premi il pulsante una volta e attendi.</p>
+<h1>🎙️ Test Paola + eSpeak-NG italiano</h1>
+<p>Test separato dalla palestra. Questa versione sostituisce il phonemizer inglese con eSpeak-NG WASM e forza la voce italiana <b>it</b>. Al primo avvio scarica Paola (~64 MB).</p>
 <textarea id="text">Uno. Due. Tre. Tieni i gomiti più vicini al corpo.</textarea><br>
 <button id="load">1 · CARICA PAOLA</button>
 <button id="speak" disabled>2 · PARLA</button>
 <div id="log">Pronto per il test.</div>
 <script type="module">
 import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/+esm";
-import { phonemize } from "https://esm.sh/phonemizer@1.2.1";
+import ESpeakNg from "https://esm.sh/espeak-ng@1.0.2";
 
 const MODEL="https://huggingface.co/rhasspy/piper-voices/resolve/main/it/it_IT/paola/medium/it_IT-paola-medium.onnx";
 const CONFIG=MODEL+".json";
@@ -47,7 +47,7 @@ function wavBlob(samples,sr){
  return new Blob([b],{type:"audio/wav"});
 }
 async function loadPaola(){
- loadBtn.disabled=true; logEl.textContent="Avvio test diretto Piper…";
+ loadBtn.disabled=true; logEl.textContent="Avvio test Piper + eSpeak-NG italiano…";
  try{
   log("Scarico configurazione italiana…");
   cfg=await (await fetch(CONFIG)).json();
@@ -63,10 +63,20 @@ async function speak(){
  speakBtn.disabled=true;
  try{
   const text=document.querySelector("#text").value.trim(); if(!text)return;
-  log("Fonemizzazione italiana…");
-  const ph=await phonemize(text,cfg.espeak?.voice||"it");
-  const ptxt=Array.isArray(ph)?ph.join(" "):String(ph?.text||ph?.phonemes||ph);
-  log("Fonemi OK · "+ptxt.slice(0,90));
+  log("Fonemizzazione eSpeak-NG italiana…");
+  const outName="phonemes-"+Date.now()+".txt";
+  const esc=text.replace(/\\/g,"\\\\").replace(/"/g,'\\"');
+  const espeak=await ESpeakNg({arguments:[
+    "--phonout",outName,
+    '--sep=""',
+    "-q","-b=1","--ipa=3",
+    "-v","it",
+    `"${esc}"`
+  ]});
+  const ptxt=espeak.FS.readFile(outName,{encoding:"utf8"}).trim();
+  try{espeak.FS.unlink(outName)}catch(_){}
+  if(!ptxt) throw new Error("eSpeak-NG non ha prodotto fonemi");
+  log("Fonemi IT OK · "+ptxt.slice(0,110));
   const ids=idsFor(Array.from(ptxt.normalize("NFD")));
   if(ids.length<4)throw new Error("nessun fonema valido");
   log("Inferenza ONNX · "+ids.length+" token…");
