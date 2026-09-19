@@ -1,133 +1,158 @@
-// CURL V3 — porting corretto del counter monolitico.
-// Usa DIRETTAMENTE frame.image (landmark 2D MediaPipe), come il Curl stabile.
-// Core/index/loader NON vanno modificati.
-//
-// MediaPipe Pose:
-// SX shoulder/elbow/wrist = 11/13/15
-// DX shoulder/elbow/wrist = 12/14/16
+// CURL V4 — Counter robusto basato sui dati reali del report V11.1.
+// Obiettivo: contare la rep; tecnica e distanze restano SEPARATE dal counter.
+// NON modificare index.html / core / loader.
 
-const CFG=Object.freeze({
-  VIS:.48, EMA:.48,
-  EXTENDED:150, START:138, TOP:62, TOP_EXIT:77,
-  READY_FRAMES:3, TOP_FRAMES:2, EXT_FRAMES:2,
-  MIN_REP_MS:600, MAX_REP_MS:7000,
-  MAX_GAP_MS:350
+const C = Object.freeze({
+  EMA: .48,
+  READY: 150, START: 138, TOP: 75, TOP_EXIT: 90,
+  READY_FRAMES: 2, TOP_FRAMES: 2, RETURN_FRAMES: 2,
+  MIN_REP_MS: 450, MAX_REP_MS: 8000,
+  // Il report mostra confidence che scende temporaneamente al 27–29%:
+  // non azzeriamo più una rep per un singolo calo di visibility.
+  MIN_VIS: .15,
+  LOST_GRACE_MS: 700
 });
 
-const IDX={
-  left:{shoulder:11,elbow:13,wrist:15},
-  right:{shoulder:12,elbow:14,wrist:16}
+const IDX = {
+  left:  { shoulder:11, elbow:13, wrist:15 },
+  right: { shoulder:12, elbow:14, wrist:16 }
 };
 
-const fresh=()=>({
-  phase:"GET_READY", reps:0, ready:0, top:0, ext:0,
-  start:0, smooth:null, lastTs:0, min:180, max:0, reason:""
+const fresh = () => ({
+  phase:"GET_READY", reps:0, smooth:null,
+  readyN:0, topN:0, returnN:0,
+  start:0, lastGood:0, min:180, max:0
 });
-const S={left:fresh(),right:fresh()};
+const A = { left:fresh(), right:fresh() };
 
-function angle2D(a,b,c){
-  if(!a||!b||!c)return null;
-  const bax=a.x-b.x,bay=a.y-b.y,bcx=c.x-b.x,bcy=c.y-b.y;
-  const den=Math.hypot(bax,bay)*Math.hypot(bcx,bcy);
-  if(!(den>1e-8))return null;
-  const cos=Math.max(-1,Math.min(1,(bax*bcx+bay*bcy)/den));
-  return Math.acos(cos)*180/Math.PI;
+function finite(x){ return Number.isFinite(x); }
+function ang(a,b,c){
+  if(!a||!b||!c) return null;
+  const ux=a.x-b.x, uy=a.y-b.y, vx=c.x-b.x, vy=c.y-b.y;
+  const d=Math.hypot(ux,uy)*Math.hypot(vx,vy);
+  if(d<1e-8) return null;
+  return Math.acos(Math.max(-1,Math.min(1,(ux*vx+uy*vy)/d)))*180/Math.PI;
 }
-function measure(frame,side){
-  const lm=frame?.image, i=IDX[side];
-  if(!lm||!i)return {angle:null,vis:0};
-  const sh=lm[i.shoulder],el=lm[i.elbow],wr=lm[i.wrist];
-  const vis=Math.min(sh?.visibility??0,el?.visibility??0,wr?.visibility??0);
-  return {angle:angle2D(sh,el,wr),vis};
+function getPath(o,p){
+  let v=o;
+  for(const k of p.split(".")) v=v?.[k];
+  return v;
 }
-function abort(st,why){
-  const reps=st.reps;
-  Object.assign(st,fresh());
-  st.reps=reps; st.reason=why;
+function landmarks(frame){
+  // Compatibilità con i nomi usati nelle varie revisioni del Core.
+  for(const p of ["image","pose","poseLandmarks","landmarks","body.image","body.poseLandmarks"]){
+    const v=getPath(frame,p);
+    if(Array.isArray(v) && v.length>=17) return v;
+  }
+  return null;
 }
-function update(frame,side,now){
-  const st=S[side],m=measure(frame,side);
+function fallbackAngle(frame,side){
+  const paths=[
+    `angles2D.${side}Elbow`, `angles2D.${side}.elbow`,
+    `imageAngles.${side}Elbow`, `angles.${side}Elbow`,
+    `angles.${side}.elbow`, `jointAngles.${side}.elbow`,
+    `elbowAngle.${side}`, `${side}ElbowAngle`
+  ];
+  for(const p of paths){
+    const v=getPath(frame,p);
+    if(finite(v)) return v;
+  }
+  return null;
+}
+function sample(frame,side){
+  const lm=landmarks(frame), i=IDX[side];
+  if(lm){
+    const s=lm[i.shoulder], e=lm[i.elbow], w=lm[i.wrist];
+    const a=ang(s,e,w);
+    const vis=Math.min(s?.visibility??1,e?.visibility??1,w?.visibility??1);
+    if(finite(a)) return {angle:a,vis};
+  }
+  const a=fallbackAngle(frame,side);
+  return {angle:a,vis:finite(a)?1:0};
+}
+function resetMotion(st){
+  st.phase="GET_READY"; st.smooth=null; st.readyN=st.topN=st.returnN=0;
+  st.start=0; st.min=180; st.max=0;
+}
+function step(frame,side,now){
+  const st=A[side], m=sample(frame,side);
 
-  if(!Number.isFinite(m.angle)||m.vis<CFG.VIS){
-    abort(st,"TRACKING"); st.lastTs=now; return null;
+  // Tracking assente davvero: concedi 700 ms prima di annullare.
+  if(!finite(m.angle) || m.vis<C.MIN_VIS){
+    if(st.lastGood && now-st.lastGood>C.LOST_GRACE_MS) resetMotion(st);
+    return null;
   }
-  if(st.lastTs && now-st.lastTs>CFG.MAX_GAP_MS){
-    abort(st,"GAP");
-  }
-  st.lastTs=now;
-  st.smooth=st.smooth===null?m.angle:CFG.EMA*m.angle+(1-CFG.EMA)*st.smooth;
+  st.lastGood=now;
+  st.smooth = st.smooth===null ? m.angle : C.EMA*m.angle+(1-C.EMA)*st.smooth;
   const a=st.smooth;
 
   if(st.phase==="GET_READY"){
-    if(a>CFG.EXTENDED){
-      if(++st.ready>=CFG.READY_FRAMES){st.phase="READY";st.reason="";}
-    } else st.ready=0;
+    st.readyN = a>=C.READY ? st.readyN+1 : 0;
+    if(st.readyN>=C.READY_FRAMES) st.phase="READY";
     return null;
   }
 
   if(st.phase==="READY"){
-    if(a<CFG.START){
-      st.phase="CURL_UP";st.start=now;st.min=a;st.max=a;st.top=0;
+    if(a<C.START){
+      st.phase="UP"; st.start=now; st.min=a; st.max=a; st.topN=0;
     }
     return null;
   }
 
-  st.min=Math.min(st.min,a);st.max=Math.max(st.max,a);
-  if(now-st.start>CFG.MAX_REP_MS){abort(st,"TIMEOUT");return null;}
+  st.min=Math.min(st.min,a); st.max=Math.max(st.max,a);
+  if(now-st.start>C.MAX_REP_MS){ resetMotion(st); return null; }
 
-  if(st.phase==="CURL_UP"){
-    if(a<CFG.TOP){
-      if(++st.top>=CFG.TOP_FRAMES)st.phase="TOP";
-    } else st.top=0;
+  if(st.phase==="UP"){
+    st.topN = a<=C.TOP ? st.topN+1 : 0;
+    if(st.topN>=C.TOP_FRAMES) st.phase="TOP";
     return null;
   }
 
   if(st.phase==="TOP"){
-    if(a>CFG.TOP_EXIT){st.phase="LOWER";st.ext=0;}
+    if(a>=C.TOP_EXIT){ st.phase="DOWN"; st.returnN=0; }
     return null;
   }
 
-  if(st.phase==="LOWER"){
-    if(a>CFG.EXTENDED){
-      if(++st.ext>=CFG.EXT_FRAMES){
-        const duration=now-st.start;
-        if(duration>=CFG.MIN_REP_MS&&duration<=CFG.MAX_REP_MS){
-          st.reps++;
-          const ev={type:"rep",side,sideReps:st.reps,
-                    total:S.left.reps+S.right.reps,duration,
-                    minAngle:st.min,maxAngle:st.max};
-          // Il braccio è già esteso: pronto per la rep successiva.
-          st.phase="READY";st.ready=CFG.READY_FRAMES;st.top=0;st.ext=0;
-          st.start=0;st.min=180;st.max=0;st.reason="";
-          return ev;
-        }
-        abort(st,"DURATION");
+  if(st.phase==="DOWN"){
+    st.returnN = a>=C.READY ? st.returnN+1 : 0;
+    if(st.returnN>=C.RETURN_FRAMES){
+      const duration=now-st.start;
+      if(duration>=C.MIN_REP_MS && duration<=C.MAX_REP_MS){
+        st.reps++;
+        const ev={
+          type:"rep", side, sideReps:st.reps,
+          total:A.left.reps+A.right.reps,
+          duration, minAngle:st.min, maxAngle:st.max
+        };
+        // Siamo già tornati distesi.
+        st.phase="READY"; st.readyN=C.READY_FRAMES;
+        st.topN=st.returnN=0; st.start=0; st.min=180; st.max=0;
+        return ev;
       }
-    } else st.ext=0;
+      resetMotion(st);
+    }
   }
   return null;
 }
 
-const CurlExercise={
-  id:"curl",name:"Curl",
-  reset(){Object.assign(S.left,fresh());Object.assign(S.right,fresh());},
+const CurlExercise = {
+  id:"curl", name:"Curl",
+  reset(){ Object.assign(A.left,fresh()); Object.assign(A.right,fresh()); },
   analyze(frame){
     const now=performance.now();
-    const le=update(frame,"left",now),re=update(frame,"right",now);
-    const ev=le||re;
-    const ml=measure(frame,"left"),mr=measure(frame,"right");
-    const result={
-      phase:`SX ${S.left.phase} · DX ${S.right.phase}`,
-      reps:S.left.reps+S.right.reps,
-      leftReps:S.left.reps,rightReps:S.right.reps,
-      leftAngle:S.left.smooth??ml.angle,rightAngle:S.right.smooth??mr.angle,
-      leftReason:S.left.reason,rightReason:S.right.reason,event:ev
-    };
-    if(ev)window.dispatchEvent(new CustomEvent("exercise-rep",{
+    const le=step(frame,"left",now), re=step(frame,"right",now), ev=le||re;
+    const l=sample(frame,"left"), r=sample(frame,"right");
+    if(ev) window.dispatchEvent(new CustomEvent("exercise-rep",{
       detail:{exercise:"curl",...ev}
     }));
-    return result;
+    return {
+      phase:`SX ${A.left.phase} · DX ${A.right.phase}`,
+      reps:A.left.reps+A.right.reps,
+      leftReps:A.left.reps, rightReps:A.right.reps,
+      leftAngle:A.left.smooth??l.angle, rightAngle:A.right.smooth??r.angle,
+      event:ev
+    };
   }
 };
 
-window.CurlExercise=CurlExercise;
+window.CurlExercise = CurlExercise;
