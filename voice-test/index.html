@@ -11,8 +11,8 @@ button{padding:14px 18px;margin-top:12px;border:0;border-radius:12px;font:inheri
 audio{width:100%;margin-top:16px}
 </style></head>
 <body>
-<h1>🎙️ Paola · Piper completo</h1>
-<p>Questa pagina usa gli asset Piper/WASM/ONNX locali presi dal repository che hai caricato.</p>
+<h1>🎙️ Paola · Piper CDN + asset locali</h1>
+<p>Questa pagina carica la libreria JavaScript da jsDelivr e usa i tuoi asset WASM/ONNX locali.</p>
 <textarea id="text">Uno. Due. Tre. Tieni i gomiti più vicini al corpo.</textarea>
 <br><button id="go">GENERA E PARLA</button>
 <div id="log">Pronto.</div><div id="player"></div>
@@ -20,7 +20,7 @@ audio{width:100%;margin-top:16px}
 <script type="module">
 import {
   PiperWebEngine, OnnxWebRuntime, PhonemizeWebRuntime, HuggingFaceVoiceProvider
-} from "./piper-tts-web.js";
+} from "https://cdn.jsdelivr.net/npm/piper-tts-web@1.1.2/+esm";
 
 const logEl=document.querySelector("#log"), btn=document.querySelector("#go"), player=document.querySelector("#player");
 const log=(m)=>{logEl.textContent+="\n• "+m;logEl.scrollTop=logEl.scrollHeight};
