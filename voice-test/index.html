@@ -9,7 +9,7 @@ button{padding:14px 18px;margin-top:12px;border:0;border-radius:12px;font:inheri
 #log{margin-top:18px;white-space:pre-wrap;background:#111827;padding:14px;border-radius:12px;min-height:150px;font:13px ui-monospace,monospace}
 audio{width:100%;margin-top:16px}</style></head>
 <body>
-<h1>🎙️ Paola · test diretto</h1>
+<h1>🎙️ Paola · test diretto ORT FIX</h1>
 <p>Niente piper-tts-web.js e niente CDN Piper. Usa il worker fonemizzatore originale del repository + ONNX Runtime Web.</p>
 <textarea id="text">Uno. Due. Tre. Tieni i gomiti più vicini al corpo.</textarea><br>
 <button id="go">GENERA E PARLA</button>
@@ -19,7 +19,12 @@ import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/+esm";
 
 const MODEL="https://huggingface.co/rhasspy/piper-voices/resolve/main/it/it_IT/paola/medium/it_IT-paola-medium.onnx";
 const CONFIG=MODEL+".json";
-ort.env.wasm.wasmPaths="./onnx/";
+// ORT 1.22 richiede sia il glue .mjs sia il binario .wasm.
+const LOCAL_JSEP_WASM = new URL("./onnx/ort-wasm-simd-threaded.jsep.wasm", location.href).href;
+ort.env.wasm.wasmPaths = {
+  mjs: "https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.22.0/ort-wasm-simd-threaded.jsep.mjs",
+  wasm: LOCAL_JSEP_WASM
+};
 ort.env.wasm.numThreads=1;
 
 const logEl=document.querySelector("#log"),btn=document.querySelector("#go"),player=document.querySelector("#player");
