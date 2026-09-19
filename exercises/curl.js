@@ -128,5 +128,4 @@ const CurlExercise={
   }
 };
 
-window.ExerciseBridge.register(CurlExercise);
 window.CurlExercise=CurlExercise;
