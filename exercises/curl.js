@@ -1,0 +1,91 @@
+// CURL V6 — port diretto del counter 2D della V11.1 monolitica.
+// Core V1.3 passa esplicitamente frame.image: i landmark MediaPipe originali.
+// Il counter usa SOLO l'angolo 2D spalla-gomito-polso.
+// Relazioni biomeccaniche restano disponibili per il validator tecnico successivo.
+
+const CFG={VIS:.48,EMA:.48,EXTENDED:150,START_CURL:138,TOP:62,TOP_FRAMES:2,EXT_FRAMES:2,MIN_REP:600,MAX_REP:7000};
+
+function angle2D(a,b,c){
+  const ab=Math.atan2(a.y-b.y,a.x-b.x),cb=Math.atan2(c.y-b.y,c.x-b.x);
+  let d=Math.abs((ab-cb)*180/Math.PI);return d>180?360-d:d;
+}
+function ema(old,v,a){return old==null?v:old*a+v*(1-a)}
+function newArm(name,sh,el,wr){return{name,sh,el,wr,state:"GET_READY",smooth:null,topFrames:0,extFrames:0,repStart:0,reps:0,lastRepMs:0,lastRaw:null,lastVis:0,tech:{baseline:null,repBase:null,repMax:null,last:null}}}
+let arms={left:newArm("SX",11,13,15),right:newArm("DX",12,14,16)};
+function resetArms(){arms={left:newArm("SX",11,13,15),right:newArm("DX",12,14,16)}}
+
+function analyzeArm(lm,a,elbowToTorso){
+  if(!lm?.length)return {ok:false,reason:"NO IMAGE LANDMARKS",arm:a};
+  const sh=lm[a.sh],el=lm[a.el],wr=lm[a.wr];
+  const vis=Math.min(sh?.visibility??0,el?.visibility??0,wr?.visibility??0);
+  a.lastVis=vis;
+  if(!sh||!el||!wr)return {ok:false,reason:"LANDMARK MANCANTI",arm:a};
+  if(vis<CFG.VIS)return {ok:false,reason:`VIS ${Math.round(vis*100)}%`,arm:a};
+
+  const raw=angle2D(sh,el,wr);a.lastRaw=raw;a.smooth=ema(a.smooth,raw,CFG.EMA);
+  const ang=a.smooth,now=performance.now();let repEvent=false;
+
+  // Misura tecnica separata: NON partecipa mai al conteggio.
+  // Baseline aggiornata solo quando il braccio è esteso/pronto.
+  if(Number.isFinite(elbowToTorso) && (a.state==="GET_READY"||a.state==="READY") && ang>CFG.EXTENDED){
+    a.tech.baseline=a.tech.baseline==null?elbowToTorso:(a.tech.baseline*.9+elbowToTorso*.1);
+  }
+
+  if(Number.isFinite(elbowToTorso) && ["CURL_UP","TOP","LOWER"].includes(a.state)){
+    a.tech.repMax=a.tech.repMax==null?elbowToTorso:Math.max(a.tech.repMax,elbowToTorso);
+  }
+
+  if(a.state==="GET_READY"){
+    if(ang>CFG.EXTENDED){if(++a.extFrames>=3){a.state="READY";a.extFrames=0}}else a.extFrames=0;
+  }else if(a.state==="READY"){
+    if(ang<CFG.START_CURL){
+      a.repStart=now;a.topFrames=0;
+      if(Number.isFinite(elbowToTorso)){
+        a.tech.repBase=Number.isFinite(a.tech.baseline)?a.tech.baseline:elbowToTorso;
+        a.tech.repMax=elbowToTorso;
+      }else{a.tech.repBase=null;a.tech.repMax=null}
+      a.state="CURL_UP"
+    }
+  }else if(a.state==="CURL_UP"){
+    if(ang<CFG.TOP){if(++a.topFrames>=CFG.TOP_FRAMES){a.state="TOP";a.topFrames=0}}else a.topFrames=0;
+    if(now-a.repStart>CFG.MAX_REP){a.state="GET_READY";a.repStart=0}
+  }else if(a.state==="TOP"){
+    if(ang>CFG.TOP+15)a.state="LOWER";
+  }else if(a.state==="LOWER"){
+    if(ang>CFG.EXTENDED){
+      if(++a.extFrames>=CFG.EXT_FRAMES){
+        const ms=now-a.repStart;
+        if(ms>=CFG.MIN_REP&&ms<=CFG.MAX_REP){
+          a.reps++;a.lastRepMs=ms;repEvent=true;
+          if(Number.isFinite(a.tech.repBase)&&Number.isFinite(a.tech.repMax)){
+            a.tech.last={base:a.tech.repBase,max:a.tech.repMax,delta:a.tech.repMax-a.tech.repBase};
+          }else a.tech.last=null;
+        }
+        a.state="READY";a.extFrames=0;a.repStart=0;
+      }
+    }else a.extFrames=0;
+  }
+  return {ok:true,arm:a,ang,raw,vis,repEvent};
+}
+
+const CurlExercise={
+  id:"curl",name:"Curl",
+  reset(){resetArms()},
+  analyze(frame){
+    const lm=frame?.image,rel=frame?.relations||{};
+    const L=analyzeArm(lm,arms.left,rel.leftElbowToTorso),R=analyzeArm(lm,arms.right,rel.rightElbowToTorso);
+    const total=arms.left.reps+arms.right.reps;
+    for(const x of [L,R])if(x.repEvent)window.dispatchEvent(new CustomEvent("exercise-rep",{detail:{
+      exercise:"curl",side:x.arm.name,total,sideReps:x.arm.reps,duration:x.arm.lastRepMs,
+      technique:{elbowToTorso:x.arm.tech.last}
+    }}));
+    const fmt=x=>x.ok?`${Math.round(x.ang)}°`:`${x.reason}`;
+    return{
+      phase:`SX ${arms.left.state.replace("_"," ")} · DX ${arms.right.state.replace("_"," ")}`,
+      reps:total,leftReps:arms.left.reps,rightReps:arms.right.reps,
+      leftAngle:L.ok?L.ang:null,rightAngle:R.ok?R.ang:null,
+      debug:`CURL V6.1 TECH | SX ${fmt(L)} raw=${Number.isFinite(arms.left.lastRaw)?Math.round(arms.left.lastRaw):"--"} vis=${Math.round(arms.left.lastVis*100)}% ${arms.left.state} rep=${arms.left.reps} | DX ${fmt(R)} raw=${Number.isFinite(arms.right.lastRaw)?Math.round(arms.right.lastRaw):"--"} vis=${Math.round(arms.right.lastVis*100)}% ${arms.right.state} rep=${arms.right.reps}`
+    };
+  }
+};
+window.CurlExercise=CurlExercise;
