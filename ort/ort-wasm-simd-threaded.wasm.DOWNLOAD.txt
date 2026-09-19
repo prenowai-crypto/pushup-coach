@@ -1,0 +1,2 @@
+https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/ort-wasm-simd-threaded.wasm
+<urlopen error [Errno -3] Temporary failure in name resolution>
