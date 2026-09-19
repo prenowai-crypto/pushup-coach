@@ -1,10 +1,10 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V8 Universal Body Tracker</title>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V8.1 Coach Summary</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}.recap{display:none;margin-top:12px;background:#151a21;border:1px solid #303947;border-radius:16px;padding:14px}
 .recap.show{display:block}.recap h2{margin:0 0 10px;font-size:16px}.recapTop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .recapBox{background:#10151b;border-radius:11px;padding:10px;text-align:center}.recapBox b{display:block;font-size:20px}.recapBox span{font-size:9px;color:#8e99a8}
 .recapSummary{margin:12px 0;padding:10px;background:#10151b;border-radius:11px;font-size:12px;line-height:1.45}
 .repTable{width:100%;border-collapse:collapse;font-size:10px}.repTable th,.repTable td{padding:6px 3px;border-bottom:1px solid #252c36;text-align:center}.repTable th{color:#8e99a8}
-.diag{margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.diag h2{font-size:12px;margin:0 0 8px;color:#aeb8c5}.diagGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.diagItem{background:#10151b;border-radius:10px;padding:8px}.diagItem .dlabel{font-size:9px;color:#8e99a8}.diagItem .dval{font-size:15px;font-weight:850;margin-top:2px}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V8 · Universal Body Tracker</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per Curl Advanced inquadra busto, braccio e mano: Pose + 21 landmark della mano. Per lo squat usa una vista laterale con il corpo intero.</div><div class="diag"><h2>UNIVERSAL BODY TRACKER</h2><div class="diagGrid">
+.diag{margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.diag h2{font-size:12px;margin:0 0 8px;color:#aeb8c5}.diagGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.diagItem{background:#10151b;border-radius:10px;padding:8px}.diagItem .dlabel{font-size:9px;color:#8e99a8}.diagItem .dval{font-size:15px;font-weight:850;margin-top:2px}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V8.1 · Coach Summary</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per Curl Advanced inquadra busto, braccio e mano: Pose + 21 landmark della mano. Per lo squat usa una vista laterale con il corpo intero.</div><div class="diag"><h2>UNIVERSAL BODY TRACKER</h2><div class="diagGrid">
 <div class="diagItem"><div class="dlabel">POSE</div><div class="dval" id="trkPose">33 punti</div></div>
 <div class="diagItem"><div class="dlabel">MANI</div><div class="dval" id="trkHands">--</div></div>
 <div class="diagItem"><div class="dlabel">PROFILO</div><div class="dval" id="trkProfile">--</div></div>
@@ -23,13 +23,14 @@
 <div class="recapTop"><div class="recapBox"><b id="rReps">0</b><span>RIPETIZIONI</span></div><div class="recapBox"><b id="rTime">0:00</b><span>DURATA</span></div><div class="recapBox"><b id="rClean">0/0</b><span>REP SENZA ALERT</span></div></div>
 <div class="recapSummary" id="rSummary">Premi FINE SESSIONE per creare il recap.</div>
 <div class="recapSummary" id="rVelocity">Velocità: nessun dato.</div>
+<div class="recapSummary" id="rCoach"><b>COACH:</b> il commento apparirà a fine sessione.</div>
 <div style="overflow:auto"><table class="repTable"><thead><tr><th>REP</th><th>ROM</th><th>↑ SALITA</th><th>↓ DISCESA</th><th>VEL. REL.</th><th>BUSTO</th><th>GOMITO</th><th>SPALLA</th><th>POLSO</th><th>ROT.</th><th>MANO</th></tr></thead><tbody id="rRows"></tbody></table></div></div>
 <div class="controls"><button id="finishSession">FINE SESSIONE</button></div><div class="controls"><button id="start">AVVIA</button><button class="secondary" id="voice">🔊 VOCE</button><button class="secondary" id="switch">CAMERA</button><button class="secondary" id="reset">RESET</button></div><div class="voiceDebug"><h2>VOICE DEBUG · PAOLA / PIPER</h2><div class="voiceLine" id="vdScript">Piper worker: …</div><div class="voiceLine" id="vdConfig">Paola config: …</div><div class="voiceLine" id="vdVoice">Paola ONNX: …</div><div class="voiceLine" id="vdAudio">AudioContext: …</div><div class="voiceLine" id="vdPlay">Ultimo test: —</div><div class="voiceActions"><button class="secondary" id="testBeep">TEST AUDIO</button><button id="testVoice">TEST VOCE</button></div></div><div class="debug" id="debug"></div></main>
 <script type="module">
 import {PoseLandmarker,HandLandmarker,FilesetResolver,DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm";
 import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/+esm";
 const $=id=>document.getElementById(id), video=$("video"),canvas=$("canvas"),ctx=canvas.getContext("2d");
-const ui={status:$("status"),reps:$("reps"),phase:$("phase"),elbow:$("elbow"),side:$("side"),tempo:$("tempo"),feedback:$("feedback"),debug:$("debug"),vdScript:$("vdScript"),vdConfig:$("vdConfig"),vdVoice:$("vdVoice"),vdAudio:$("vdAudio"),vdPlay:$("vdPlay"),metricLabel:$("metricLabel"),sideLabel:$("sideLabel"),exercise:$("exercise"),dTorso:$("dTorso"),dElbowDrift:$("dElbowDrift"),dShoulder:$("dShoulder"),dHand:$("dHand"),dWrist:$("dWrist"),dPalm:$("dPalm"),curlDiag:$("curlDiag"),sessionRecap:$("sessionRecap"),rReps:$("rReps"),rTime:$("rTime"),rClean:$("rClean"),rSummary:$("rSummary"), rRows:$("rRows"),rVelocity:$("rVelocity"),loadKg:$("loadKg"),targetReps:$("targetReps"),dVelocity:$("dVelocity"),trkPose:$("trkPose"),trkHands:$("trkHands"),trkProfile:$("trkProfile")};
+const ui={status:$("status"),reps:$("reps"),phase:$("phase"),elbow:$("elbow"),side:$("side"),tempo:$("tempo"),feedback:$("feedback"),debug:$("debug"),vdScript:$("vdScript"),vdConfig:$("vdConfig"),vdVoice:$("vdVoice"),vdAudio:$("vdAudio"),vdPlay:$("vdPlay"),metricLabel:$("metricLabel"),sideLabel:$("sideLabel"),exercise:$("exercise"),dTorso:$("dTorso"),dElbowDrift:$("dElbowDrift"),dShoulder:$("dShoulder"),dHand:$("dHand"),dWrist:$("dWrist"),dPalm:$("dPalm"),curlDiag:$("curlDiag"),sessionRecap:$("sessionRecap"),rReps:$("rReps"),rTime:$("rTime"),rClean:$("rClean"),rSummary:$("rSummary"), rRows:$("rRows"),rVelocity:$("rVelocity"),loadKg:$("loadKg"),targetReps:$("targetReps"),dVelocity:$("dVelocity"),trkPose:$("trkPose"),trkHands:$("trkHands"),trkProfile:$("trkProfile"),rCoach:$("rCoach")};
 const CFG={VIS:.48,EMA:.48,EXTENDED:150,START_CURL:138,TOP:62,TOP_FRAMES:2,EXT_FRAMES:2,MIN_REP:600,MAX_REP:7000,ELBOW_DRIFT:.13,SHOULDER_SWING:.10};
 const SQUAT={VIS:.45,EMA:.50,STAND:155,START:145,BOTTOM:105,BOTTOM_FRAMES:2,STAND_FRAMES:3,MIN_REP:700,MAX_REP:9000,TORSO_WARN:42};
 // V6: exercise definitions are data. The runtime dispatches by engine/family.
@@ -163,10 +164,45 @@ function finishRepTelemetry(){
  repTelemetry=null;
 }
 function fmtTime(ms){const sec=Math.max(0,Math.round(ms/1000)),m=Math.floor(sec/60),ss=String(sec%60).padStart(2,"0");return m+":"+ss}
+
+function italianList(items){
+ if(!items.length)return "";
+ if(items.length===1)return items[0];
+ return items.slice(0,-1).join(", ")+" e "+items[items.length-1];
+}
+function makeCoachSummary(data,counts,clean,load,target,loss){
+ const total=data.length;
+ if(!total)return "Non ho registrato ripetizioni complete in questa sessione.";
+ const corrected=total-clean;
+ const labels={torso:"stabilità del busto",elbow:"posizione del gomito",shoulder:"stabilità della spalla",wrist:"posizione del polso",hand:"visibilità della mano"};
+ const advice={
+   torso:"Cerca di mantenere il busto più stabile, evitando di aiutare la salita con l'oscillazione.",
+   elbow:"Tieni il gomito più stabile e vicino al fianco durante il movimento.",
+   shoulder:"Evita di sollevare o portare avanti la spalla per aiutare il curl.",
+   wrist:"Presta maggiore attenzione a mantenere il polso neutro e stabile.",
+   hand:"Prova a inquadrare meglio mano e polso per permettermi di controllare tutta la ripetizione."
+ };
+ const ranked=Object.entries(counts).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+ let parts=[`Hai completato ${total} ${total===1?"ripetizione":"ripetizioni"}.`];
+ if(clean===total)parts.push("Tutte le ripetizioni sono risultate senza alert tecnici con le soglie attuali.");
+ else if(clean>0)parts.push(`${clean} sono risultate senza alert tecnici e ${corrected} con almeno una correzione tecnica.`);
+ else parts.push("In tutte le ripetizioni ho rilevato almeno una correzione tecnica.");
+ if(ranked.length){
+   const [main,n]=ranked[0];
+   parts.push(`L'aspetto che ho rilevato più spesso riguarda ${labels[main]}, in ${n} ${n===1?"ripetizione":"ripetizioni"}.`);
+   parts.push(advice[main]);
+ }
+ if(target>0){
+   if(total>=target)parts.push(`Hai raggiunto il target di ${target} ripetizioni.`);
+   else parts.push(`Ti sei fermato a ${total} su un target di ${target} ripetizioni.`);
+ }
+ if(Number.isFinite(loss)&&loss>=35)parts.push("La fase di salita è rallentata nettamente verso la fine della serie.");
+ return parts.join(" ");
+}
 function buildSessionRecap(){
  const data=sessionReps;ui.rReps.textContent=reps;ui.rTime.textContent=fmtTime(performance.now()-sessionStart);
  const load=parseFloat(ui.loadKg.value)||0,target=parseInt(ui.targetReps.value)||0;
- if(activeExercise!=="curl"){ui.rClean.textContent="—";ui.rSummary.textContent="Il recap tecnico avanzato è attualmente attivo sul Curl.";ui.rVelocity.textContent="";ui.rRows.innerHTML="";ui.sessionRecap.classList.add("show");return}
+ if(activeExercise!=="curl"){ui.rClean.textContent="—";ui.rSummary.textContent="Il recap tecnico avanzato è attualmente attivo sul Curl.";ui.rVelocity.textContent="";ui.rCoach.innerHTML="<b>COACH:</b> Recap tecnico vocale avanzato disponibile attualmente per Curl.";ui.rRows.innerHTML="";ui.sessionRecap.classList.add("show");return}
  let counts={torso:0,elbow:0,shoulder:0,wrist:0,hand:0},clean=0;
  for(const x of data){const f={torso:x.torso>18,elbow:x.elbow>.20,shoulder:x.shoulder>.14,wrist:x.wrist>32,hand:!x.hand};for(const k in f)if(f[k])counts[k]++;if(!Object.values(f).some(Boolean))clean++}
  ui.rClean.textContent=clean+"/"+data.length;
@@ -177,6 +213,9 @@ function buildSessionRecap(){
  for(const x of data)x.rel=baseline&&x.upMs?Math.min(150,100*baseline/x.upMs):null;
  const last=validUp.length?validUp[validUp.length-1]:null,loss=(baseline&&last?.upMs)?Math.max(0,100-(100*baseline/last.upMs)):null;
  ui.rVelocity.textContent=loss==null?"Velocità: dati insufficienti.":`Velocity loss stimata: ${loss.toFixed(0)}%. Baseline = media delle prime ${Math.min(2,validUp.length)} rep. È una stima video relativa, non una misura VBT in m/s.`;
+ const coachText=makeCoachSummary(data,counts,clean,load,target,loss);
+ ui.rCoach.innerHTML="<b>COACH:</b> "+coachText;
+ VoiceManager.enqueue(coachText,{priority:3,key:"session-summary-"+Date.now(),cooldown:0,maxAge:30000});
  ui.rRows.innerHTML=data.map(x=>`<tr><td>${x.n}</td><td>${x.rom==null?"--":Math.round(x.rom)+"°"}</td><td>${x.upMs? (x.upMs/1000).toFixed(2)+"s":"--"}</td><td>${x.downMs? (x.downMs/1000).toFixed(2)+"s":"--"}</td><td>${x.rel?Math.round(x.rel)+"%":"--"}</td><td>${x.torso>18?"⚠":"✓"} ${Math.round(x.torso)}°</td><td>${x.elbow>.20?"⚠":"✓"} ${x.elbow.toFixed(2)}</td><td>${x.shoulder>.14?"⚠":"✓"} ${x.shoulder.toFixed(2)}</td><td>${x.wrist>32?"⚠":"✓"} ${Math.round(x.wrist)}°</td><td>${x.rotationRange==null?"--":Math.round(x.rotationRange)+"°"}</td><td>${x.hand?"✓":"⚠"}</td></tr>`).join("");
  ui.sessionRecap.classList.add("show");ui.sessionRecap.scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -489,7 +528,7 @@ function reset(){
  if(typeof VoiceManager!=="undefined")VoiceManager.reset();
  if(typeof ErrorCoach!=="undefined")ErrorCoach.clear();
  trackingLostSince=0;trackingLostSpoken=false;
- reps=0;ui.reps.textContent="0";ui.tempo.textContent="--";sessionStart=performance.now();sessionReps=[];repTelemetry=null;phaseUpStart=phaseTopAt=phaseDownStart=0;ui.dVelocity.textContent="--";ui.sessionRecap.classList.remove("show");lastHands=null;lastHandRun=0;MotionFeatures.clear();["dTorso","dElbowDrift","dShoulder","dHand","dWrist","dPalm"].forEach(k=>ui[k].textContent="--");smElbow=null;smKnee=null;topFrames=extFrames=bottomFrames=standFrames=0;repStart=0;startElbowPos=startShoulderPos=null;lastFeedback="";setState("GET_READY");
+ reps=0;ui.reps.textContent="0";ui.tempo.textContent="--";sessionStart=performance.now();sessionReps=[];repTelemetry=null;phaseUpStart=phaseTopAt=phaseDownStart=0;ui.dVelocity.textContent="--";ui.sessionRecap.classList.remove("show");ui.rCoach.innerHTML="<b>COACH:</b> il commento apparirà a fine sessione.";lastHands=null;lastHandRun=0;MotionFeatures.clear();["dTorso","dElbowDrift","dShoulder","dHand","dWrist","dPalm"].forEach(k=>ui[k].textContent="--");smElbow=null;smKnee=null;topFrames=extFrames=bottomFrames=standFrames=0;repStart=0;startElbowPos=startShoulderPos=null;lastFeedback="";setState("GET_READY");
  const p=EXERCISE_PROFILES[activeExercise]||EXERCISE_PROFILES.curl;
  fb(`Reset ${p.name}. Preparati nella posizione iniziale.`,"",false);
 }
