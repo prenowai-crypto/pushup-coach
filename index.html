@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07090d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Push-Up Coach V3.2 Audio</title>
+<style>
+*{box-sizing:border-box} html,body{margin:0;background:#07090d;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100dvh}.app{width:min(100%,860px);margin:auto;padding:max(10px,env(safe-area-inset-top)) 10px max(16px,env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}h1{font-size:19px;margin:0}.pill{font-size:12px;padding:7px 10px;border-radius:999px;background:#202631}.ok{background:#123b25;color:#8ff0b3}.err{background:#491b1b;color:#ff9c9c}
+.stage{position:relative;aspect-ratio:3/4;max-height:68dvh;border-radius:18px;overflow:hidden;background:#11151d}
+video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}canvas{pointer-events:none}.mirror{transform:scaleX(-1)}
+.top{position:absolute;z-index:3;left:10px;right:10px;top:10px;display:flex;justify-content:space-between}.badge{background:#000b;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:800}
+.rep{position:absolute;z-index:3;right:12px;bottom:12px;background:#000d;border-radius:18px;padding:10px 14px;text-align:center}.rep b{font-size:46px;line-height:1}.rep small{display:block;color:#999;font-size:9px;margin-top:4px}
+.guide{position:absolute;z-index:3;left:12px;bottom:12px;max-width:65%;background:#000b;border-radius:12px;padding:9px 10px;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:8px}.card{background:#11151d;border-radius:13px;padding:9px 6px;text-align:center}.card small{display:block;color:#858c99;font-size:9px;text-transform:uppercase}.card b{display:block;font-size:19px;margin-top:3px}
+.feedback{margin-top:8px;background:#11151d;border-radius:13px;padding:13px;min-height:48px;font-size:14px}.good{border-left:4px solid #3cdb78}.warn{border-left:4px solid #ffb02e}.bad{border-left:4px solid #ff5050}
+.controls{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:7px;margin-top:8px}button{border:0;border-radius:13px;min-height:49px;font-weight:800;font-size:14px;touch-action:manipulation}#start{background:#fff;color:#000}#switch,#voice,#reset{background:#1d2431;color:#fff}
+.debug{margin-top:8px;padding:9px;background:#0d1016;border-radius:10px;color:#9ca4b2;font:11px ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.45}
+@media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(orientation:landscape) and (max-height:650px){.stage{aspect-ratio:16/9;max-height:63dvh}}
+</style>
+</head>
+<body><div class="app">
+<header><h1>Push-Up Coach V3.2 Audio</h1><div id="status" class="pill">Pronto</div></header>
+<div class="stage">
+<video id="video" playsinline muted autoplay></video><canvas id="canvas"></canvas>
+<div class="top"><div id="phase" class="badge">GET READY</div><div id="fps" class="badge">0 FPS</div></div>
+<div class="guide">📱 Ripresa laterale. Corpo intero visibile. Parti con braccia distese.</div>
+<div class="rep"><b id="reps">0</b><small>RIPETIZIONI</small></div>
+</div>
+<div class="grid">
+<div class="card"><small>Gomito</small><b id="elbow">--°</b></div>
+<div class="card"><small>Linea corpo</small><b id="body">--°</b></div>
+<div class="card"><small>Profondità min</small><b id="depth">--°</b></div>
+<div class="card"><small>Tempo rep</small><b id="tempo">--</b></div>
+</div>
+<div id="feedback" class="feedback">Premi AVVIA e consenti la fotocamera.</div>
+<div class="controls"><button id="start">AVVIA</button><button id="switch">CAMERA</button><button id="voice">🔊 VOCE</button><button id="reset">RESET</button></div>
+<div id="debug" class="debug">V3 • attesa avvio</div>
+</div>
+<script type="module">
+import {PoseLandmarker,FilesetResolver,DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm";
+
+const $=id=>document.getElementById(id);
+const video=$("video"),canvas=$("canvas"),ctx=canvas.getContext("2d");
+const ui={status:$("status"),phase:$("phase"),fps:$("fps"),reps:$("reps"),elbow:$("elbow"),body:$("body"),depth:$("depth"),tempo:$("tempo"),feedback:$("feedback"),debug:$("debug")};
+const C={
+  VIS:0.45, READY_BODY:145, GOOD_BODY:150,
+  UP:155, START:140, DOWN:95,
+  DOWN_FRAMES:2, UP_FRAMES:2, READY_FRAMES:3,
+  EMA:0.50, MIN_REP_MS:650, MAX_REP_MS:8000
+};
+let pose=null,drawer=null,stream=null,running=false,facing="environment",lastVideo=-1;
+let reps=0,state="GET_READY",smoothElbow=null,smoothBody=null,downFrames=0,upFrames=0,readyFrames=0;
+let repStart=0,bottomAt=0,minElbow=180,fullDepth=false,frames=0,fpsT=performance.now();
+
+function status(t,c=""){ui.status.textContent=t;ui.status.className="pill "+c}
+function feedback(t,c=""){ui.feedback.textContent=t;ui.feedback.className="feedback "+c}
+// V3.2: clip audio reali, senza Web Speech / speechSynthesis.
+let voiceEnabled=true, currentAudio=null;
+const cueCooldown=new Map();
+const clips={
+  pronto:"audio/pronto.mp3", sali:"audio/sali.mp3", scendi:"audio/scendi.mp3",
+  corpo:"audio/corpo.mp3", nonvalida:"audio/nonvalida.mp3"
+};
+for(let i=1;i<=20;i++) clips[String(i)]=`audio/${i}.mp3`;
+const audioCache={};
+for(const [k,src] of Object.entries(clips)){
+  const a=new Audio(src); a.preload="auto"; audioCache[k]=a;
+}
+function stopAudio(){
+  if(currentAudio){try{currentAudio.pause();currentAudio.currentTime=0}catch{} currentAudio=null;}
+}
+function playCue(key,{cooldown=0,priority=false}={}){
+  if(!voiceEnabled)return;
+  const now=Date.now(), last=cueCooldown.get(key)||0;
+  if(now-last<cooldown)return;
+  const base=audioCache[key]; if(!base)return;
+  cueCooldown.set(key,now);
+  if(priority)stopAudio(); else if(currentAudio && !currentAudio.paused)return;
+  const a=base.cloneNode(); currentAudio=a;
+  a.onended=()=>{if(currentAudio===a)currentAudio=null};
+  a.onerror=()=>console.warn("Audio non disponibile:",key);
+  a.play().catch(e=>console.warn("Riproduzione audio bloccata:",e));
+}
+function sayRep(n){playCue(String(((n-1)%20)+1),{priority:true})}
+function unlockAudio(){playCue("pronto",{priority:true})}
+
+function setState(s){state=s;ui.phase.textContent=s.replace("_"," ")}
+function debug(t){ui.debug.textContent=t}
+function vis(p){return p?.visibility ?? 1}
+function ema(prev,cur){return prev==null?cur:C.EMA*cur+(1-C.EMA)*prev}
+function angle2D(a,b,c){
+  let r=Math.abs(Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x))*180/Math.PI;
+  if(r>180)r=360-r; return r;
+}
+function sideData(p,L){
+  const s=p[L?11:12],e=p[L?13:14],w=p[L?15:16],h=p[L?23:24],a=p[L?27:28];
+  return {s,e,w,h,a,score:vis(s)+vis(e)+vis(w)+vis(h)+vis(a)};
+}
+function validSide(x){return [x.s,x.e,x.w,x.h,x.a].every(q=>vis(q)>=C.VIS)}
+function stopStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+function mirror(){const m=facing==="user";video.classList.toggle("mirror",m);canvas.classList.toggle("mirror",m)}
+
+async function initPose(){
+  if(pose)return;
+  status("Caricamento AI...");
+  const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm");
+  try{
+    pose=await PoseLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",delegate:"GPU"},runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5});
+  }catch(e){
+    pose=await PoseLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",delegate:"CPU"},runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5});
+  }
+  drawer=new DrawingUtils(ctx); status("AI pronta","ok");
+}
+async function startCamera(){
+  unlockAudio();
+  try{
+    $("start").disabled=true;$("start").textContent="CARICAMENTO...";
+    await initPose();
+    if(!navigator.mediaDevices?.getUserMedia)throw new Error("Fotocamera browser non disponibile.");
+    stopStream();
+    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}}});
+    video.srcObject=stream;await video.play();canvas.width=video.videoWidth;canvas.height=video.videoHeight;mirror();
+    running=true;lastVideo=-1;status("Camera attiva","ok");feedback("Mettiti in plank laterale con le braccia distese.","good");
+    $("start").disabled=false;$("start").textContent="ATTIVA";requestAnimationFrame(loop);
+  }catch(e){
+    console.error(e);running=false;status("Errore","err");feedback((e.name==="NotAllowedError"?"Permesso fotocamera negato.":e.message),"bad");debug("ERRORE "+e.name+": "+e.message);$("start").disabled=false;$("start").textContent="RIPROVA";
+  }
+}
+function draw(result){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(!result.landmarks?.length)return;
+  drawer.drawConnectors(result.landmarks[0],PoseLandmarker.POSE_CONNECTIONS,{lineWidth:3});
+  drawer.drawLandmarks(result.landmarks[0],{radius:4});
+}
+function analyze(result){
+  if(!result.landmarks?.length){setState("NO_BODY");feedback("Non vedo il corpo: allontana il telefono.","warn");return}
+  const p=result.landmarks[0],L=sideData(p,true),R=sideData(p,false);
+  let side=L.score>=R.score?L:R,sideName=L.score>=R.score?"SX":"DX";
+  if(!validSide(side)){setState("TRACKING");feedback("Servono spalla, gomito, polso, anca e caviglia visibili.","warn");return}
+  // 2D angle, come nei push-up counter di riferimento. La ripresa deve essere laterale.
+  smoothElbow=ema(smoothElbow,angle2D(side.s,side.e,side.w));
+  smoothBody=ema(smoothBody,angle2D(side.s,side.h,side.a));
+  ui.elbow.textContent=Math.round(smoothElbow)+"°";ui.body.textContent=Math.round(smoothBody)+"°";
+  updateFSM(smoothElbow,smoothBody);
+  debug(`lato ${sideName} | stato ${state} | gomito ${smoothElbow.toFixed(1)}° | corpo ${smoothBody.toFixed(1)}° | downFrames ${downFrames} | upFrames ${upFrames}`);
+}
+function updateFSM(elbow,body){
+  const now=performance.now();
+  // Reacquire valid start position. We don't reset a rep merely because body angle dips during movement.
+  if(["GET_READY","NO_BODY","TRACKING"].includes(state)){
+    if(body>C.READY_BODY && elbow>C.UP){readyFrames++; if(readyFrames>=C.READY_FRAMES){setState("READY");feedback("Pronto. Scendi fino a portare il gomito sotto ~95°.","good");playCue("pronto",{cooldown:5000});}}
+    else{readyFrames=0;feedback(body<=C.READY_BODY?"Allinea spalle, anche e caviglie.":"Distendi le braccia per iniziare.","warn")}
+    return;
+  }
+  if(state==="READY"){
+    if(elbow<C.START){setState("DESCENT");repStart=now;bottomAt=0;minElbow=elbow;fullDepth=false;downFrames=0;upFrames=0;feedback("Discesa…","")}
+    return;
+  }
+  if(state==="DESCENT"){
+    minElbow=Math.min(minElbow,elbow);ui.depth.textContent=Math.round(minElbow)+"°";
+    if(elbow<C.DOWN){downFrames++}else{downFrames=0}
+    if(downFrames>=C.DOWN_FRAMES){fullDepth=true;bottomAt=now;setState("BOTTOM");feedback("Profondità raggiunta. Risali!","good");playCue("sali",{cooldown:1200});return}
+    // Turned around early: still allow ascent, but it will not count.
+    if(elbow>minElbow+15){bottomAt=now;setState("ASCENT");feedback("Stai risalendo: per contare devi scendere sotto ~95°.","warn");playCue("scendi",{cooldown:2500,priority:true})}
+    return;
+  }
+  if(state==="BOTTOM"){
+    minElbow=Math.min(minElbow,elbow);ui.depth.textContent=Math.round(minElbow)+"°";
+    if(elbow>minElbow+10){setState("ASCENT");feedback("Salita…","")}
+    return;
+  }
+  if(state==="ASCENT"){
+    if(elbow>C.UP){upFrames++}else{upFrames=0}
+    if(upFrames>=C.UP_FRAMES){
+      const dur=now-repStart;
+      if(fullDepth && dur>=C.MIN_REP_MS && dur<=C.MAX_REP_MS){
+        reps++;ui.reps.textContent=reps;ui.tempo.textContent=(dur/1000).toFixed(1)+"s";sayRep(reps);
+        feedback(body<C.GOOD_BODY?`Rep ${reps} ✓ — prova a mantenere il corpo più allineato.`:`Rep ${reps} ✓` ,body<C.GOOD_BODY?"warn":"good");if(body<C.GOOD_BODY)setTimeout(()=>playCue("corpo",{cooldown:5000}),850);
+      }else{
+        feedback(fullDepth?"Movimento troppo breve/lungo: rep non contata.":"Rep non contata: profondità insufficiente.","warn");playCue(fullDepth?"nonvalida":"scendi",{cooldown:2500,priority:true});
+      }
+      setState("READY");repStart=0;bottomAt=0;minElbow=180;fullDepth=false;downFrames=0;upFrames=0;ui.depth.textContent="--°";
+    }
+  }
+}
+function updateFPS(){frames++;const n=performance.now(),d=n-fpsT;if(d>=1000){ui.fps.textContent=Math.round(frames*1000/d)+" FPS";frames=0;fpsT=n}}
+function loop(){
+  if(!running)return;
+  if(video.readyState>=2 && video.currentTime!==lastVideo){
+    lastVideo=video.currentTime;
+    try{const r=pose.detectForVideo(video,performance.now());draw(r);analyze(r);updateFPS()}catch(e){console.error(e);debug("TRACKING ERROR: "+e.message)}
+  }
+  requestAnimationFrame(loop);
+}
+function resetAll(){reps=0;ui.reps.textContent="0";ui.tempo.textContent="--";ui.depth.textContent="--°";smoothElbow=null;smoothBody=null;downFrames=upFrames=readyFrames=0;repStart=0;minElbow=180;fullDepth=false;setState("GET_READY");feedback("Reset. Mettiti in plank con braccia distese.","")}
+$("start").addEventListener("click",startCamera);
+$("switch").addEventListener("click",async()=>{facing=facing==="environment"?"user":"environment";if(running){running=false;stopStream();await startCamera()}});
+$("voice").addEventListener("click",()=>{voiceEnabled=!voiceEnabled;$("voice").textContent=voiceEnabled?"🔊 VOCE":"🔇 MUTO";if(!voiceEnabled)stopAudio();else playCue("pronto",{priority:true});});
+$("reset").addEventListener("click",resetAll);
+if(!window.isSecureContext){status("HTTPS richiesto","err");feedback("Apri l'app tramite HTTPS.","bad")}
+</script>
+</body></html>
