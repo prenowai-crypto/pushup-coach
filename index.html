@@ -1,10 +1,10 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V10 Universal 3D Kinematic Body Engine</title>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V9.1H Dual-Arm Heavy</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}.recap{display:none;margin-top:12px;background:#151a21;border:1px solid #303947;border-radius:16px;padding:14px}
 .recap.show{display:block}.recap h2{margin:0 0 10px;font-size:16px}.recapTop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .recapBox{background:#10151b;border-radius:11px;padding:10px;text-align:center}.recapBox b{display:block;font-size:20px}.recapBox span{font-size:9px;color:#8e99a8}
 .recapSummary{margin:12px 0;padding:10px;background:#10151b;border-radius:11px;font-size:12px;line-height:1.45}
 .repTable{width:100%;border-collapse:collapse;font-size:10px}.repTable th,.repTable td{padding:6px 3px;border-bottom:1px solid #252c36;text-align:center}.repTable th{color:#8e99a8}
-.diag{margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.diag h2{font-size:12px;margin:0 0 8px;color:#aeb8c5}.diagGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.diagItem{background:#10151b;border-radius:10px;padding:8px}.diagItem .dlabel{font-size:9px;color:#8e99a8}.diagItem .dval{font-size:15px;font-weight:850;margin-top:2px}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V10 · Universal 3D Kinematic Engine</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per Curl Advanced inquadra busto, braccio e mano: Pose + 21 landmark della mano. Per lo squat usa una vista laterale con il corpo intero.</div><div class="diag"><h2>UNIVERSAL BODY TRACKER</h2><div class="diagGrid">
+.diag{margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.diag h2{font-size:12px;margin:0 0 8px;color:#aeb8c5}.diagGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.diagItem{background:#10151b;border-radius:10px;padding:8px}.diagItem .dlabel{font-size:9px;color:#8e99a8}.diagItem .dval{font-size:15px;font-weight:850;margin-top:2px}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V9.1H · Dual-Arm Heavy</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per Curl Advanced inquadra busto, braccio e mano: Pose + 21 landmark della mano. Per lo squat usa una vista laterale con il corpo intero.</div><div class="diag"><h2>UNIVERSAL BODY TRACKER</h2><div class="diagGrid">
 <div class="diagItem"><div class="dlabel">POSE</div><div class="dval" id="trkPose">33 punti</div></div>
 <div class="diagItem"><div class="dlabel">MANI</div><div class="dval" id="trkHands">--</div></div>
 <div class="diagItem"><div class="dlabel">PROFILO</div><div class="dval" id="trkProfile">--</div></div>
@@ -62,92 +62,83 @@ const V3={
  sub:(a,b)=>({x:a.x-b.x,y:a.y-b.y,z:(a.z||0)-(b.z||0)}),
  dot:(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z,
  mag:a=>Math.hypot(a.x,a.y,a.z),
- unit(a){const m=this.mag(a)||1;return{x:a.x/m,y:a.y/m,z:a.z/m}},
  angle(a,b){const d=this.mag(a)*this.mag(b);if(!d)return NaN;return Math.acos(Math.max(-1,Math.min(1,this.dot(a,b)/d)))*180/Math.PI},
- dist:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,(a.z||0)-(b.z||0)),
- mid:(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:((a.z||0)+(b.z||0))/2})
+ dist:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,(a.z||0)-(b.z||0))
 };
-const POSE={nose:0,lShoulder:11,rShoulder:12,lElbow:13,rElbow:14,lWrist:15,rWrist:16,lPinky:17,rPinky:18,lIndex:19,rIndex:20,lThumb:21,rThumb:22,lHip:23,rHip:24,lKnee:25,rKnee:26,lAnkle:27,rAnkle:28,lHeel:29,rHeel:30,lFoot:31,rFoot:32};
-
-const KinematicBody={
- previous:null, frame:null,
- joint(lm,i,now){
-   const p=lm?.[i]; if(!p)return null;
-   const prev=this.previous?.world?.[i]||this.previous?.pose?.[i];
-   const dt=this.previous?Math.max(.001,(now-this.previous.time)/1000):0;
-   return {x:p.x,y:p.y,z:p.z||0,visibility:p.visibility??1,
-     velocity:prev&&dt?{x:(p.x-prev.x)/dt,y:(p.y-prev.y)/dt,z:((p.z||0)-(prev.z||0))/dt}:null};
- },
- angle(lm,a,b,c){return V3.angle(V3.sub(lm[a],lm[b]),V3.sub(lm[c],lm[b]))},
- segment(lm,a,b){const v=V3.sub(lm[b],lm[a]);return{vector:v,direction:V3.unit(v),length:V3.mag(v)}},
- build(poseResult,handResult){
-   const now=performance.now(),pose=poseResult?.landmarks?.[0]||null,world=poseResult?.worldLandmarks?.[0]||null;
-   const hands=handResult?.landmarks||[],handWorld=handResult?.worldLandmarks||[];
-   if(!pose)return null;
-   const lm=world||pose, source=world?"WORLD_3D":"IMAGE_2D";
-   const J={};
-   for(const [name,i] of Object.entries(POSE))J[name]=this.joint(lm,i,now);
-   const S={
-     leftUpperArm:this.segment(lm,11,13),rightUpperArm:this.segment(lm,12,14),
-     leftForearm:this.segment(lm,13,15),rightForearm:this.segment(lm,14,16),
-     leftThigh:this.segment(lm,23,25),rightThigh:this.segment(lm,24,26),
-     leftShin:this.segment(lm,25,27),rightShin:this.segment(lm,26,28),
-     shoulderLine:this.segment(lm,11,12),hipLine:this.segment(lm,23,24)
-   };
-   const A={
-     left:{elbow:this.angle(lm,11,13,15),shoulder:this.angle(lm,13,11,23),hip:this.angle(lm,11,23,25),knee:this.angle(lm,23,25,27),ankle:this.angle(lm,25,27,31)},
-     right:{elbow:this.angle(lm,12,14,16),shoulder:this.angle(lm,14,12,24),hip:this.angle(lm,12,24,26),knee:this.angle(lm,24,26,28),ankle:this.angle(lm,26,28,32)}
-   };
-   const shoulderWidth=V3.dist(lm[11],lm[12]),hipWidth=V3.dist(lm[23],lm[24]),handDistance=V3.dist(lm[15],lm[16]),footDistance=V3.dist(lm[31],lm[32]);
-   const torsoTop=V3.mid(lm[11],lm[12]),torsoBottom=V3.mid(lm[23],lm[24]),torsoVec=V3.sub(torsoTop,torsoBottom);
-   const relations={
-     shoulderWidth,hipWidth,handDistance,footDistance,
-     handShoulderRatio:shoulderWidth?handDistance/shoulderWidth:NaN,
-     footHipRatio:hipWidth?footDistance/hipWidth:NaN,
-     humerusTorso:{left:A.left.shoulder,right:A.right.shoulder},
-     symmetry:{
-       elbow:Math.abs(A.left.elbow-A.right.elbow),shoulder:Math.abs(A.left.shoulder-A.right.shoulder),
-       hip:Math.abs(A.left.hip-A.right.hip),knee:Math.abs(A.left.knee-A.right.knee)
-     }
-   };
-   const torso={vector:torsoVec,direction:V3.unit(torsoVec),length:V3.mag(torsoVec),
-     inclination:V3.angle(torsoVec,{x:0,y:-1,z:0})};
-   const view=this.detectView(pose);
-   const frame={time:now,source,pose,world,hands,handWorld,joints:J,segments:S,angles:A,relations,torso,view};
-   this.previous=this.frame; this.frame=frame; return frame;
- },
- detectView(p){
-   const sw=Math.abs(p[12].x-p[11].x),hw=Math.abs(p[24].x-p[23].x);
-   const torso=Math.max(.001,Math.hypot(((p[11].x+p[12].x)-(p[23].x+p[24].x))/2,((p[11].y+p[12].y)-(p[23].y+p[24].y))/2));
-   const ratio=((sw+hw)/2)/torso; let name,confidence;
-   if(ratio>.62){name="FRONTALE / POST.";confidence=Math.min(.98,.65+(ratio-.62));}
-   else if(ratio>.28){name="3/4 · 30–60°";confidence=.82;}
-   else{name="LATERALE";confidence=Math.min(.96,.70+(.28-ratio));}
-   const vis=[11,12,23,24].map(i=>p[i]?.visibility??1).reduce((a,b)=>a+b,0)/4;
-   return{name,confidence:Math.max(0,Math.min(1,confidence*Math.max(.35,vis))),ratio};
- }
+const POSE={
+ nose:0,lShoulder:11,rShoulder:12,lElbow:13,rElbow:14,lWrist:15,rWrist:16,
+ lPinky:17,rPinky:18,lIndex:19,rIndex:20,lThumb:21,rThumb:22,
+ lHip:23,rHip:24,lKnee:25,rKnee:26,lAnkle:27,rAnkle:28,lHeel:29,rHeel:30,lFoot:31,rFoot:32
 };
-
 const BodyTracker={
  frame:null,
  update(poseResult,handResult){
-   const k=KinematicBody.build(poseResult,handResult); if(!k)return null;
-   // Backward-compatible feature facade: existing Curl/Squat stay unchanged.
-   const p=k.pose,w=k.world,f={};
-   const A=(a,b,c)=>angle2D(p[a],p[b],p[c]);
-   f.leftElbow=A(11,13,15);f.rightElbow=A(12,14,16);f.leftShoulder=A(13,11,23);f.rightShoulder=A(14,12,24);
-   f.leftHip=A(11,23,25);f.rightHip=A(12,24,26);f.leftKnee=A(23,25,27);f.rightKnee=A(24,26,28);f.leftAnkle=A(25,27,31);f.rightAnkle=A(26,28,32);
-   f.shoulderWidth=Math.hypot(p[11].x-p[12].x,p[11].y-p[12].y);f.handDistance=Math.hypot(p[15].x-p[16].x,p[15].y-p[16].y);f.handShoulderRatio=f.shoulderWidth?f.handDistance/f.shoulderWidth:NaN;
-   f.shoulderTilt=Math.atan2(p[12].y-p[11].y,p[12].x-p[11].x)*180/Math.PI;f.hipTilt=Math.atan2(p[24].y-p[23].y,p[24].x-p[23].x)*180/Math.PI;
-   f.torsoLean=Math.abs(Math.atan2(((p[11].x+p[12].x)/2)-((p[23].x+p[24].x)/2),((p[23].y+p[24].y)/2)-((p[11].y+p[12].y)/2))*180/Math.PI);
-   if(w){f.leftElbow3D=k.angles.left.elbow;f.rightElbow3D=k.angles.right.elbow;f.leftShoulder3D=k.angles.left.shoulder;f.rightShoulder3D=k.angles.right.shoulder;f.leftHip3D=k.angles.left.hip;f.rightHip3D=k.angles.right.hip;f.leftKnee3D=k.angles.left.knee;f.rightKnee3D=k.angles.right.knee;f.leftAnkle3D=k.angles.left.ankle;f.rightAnkle3D=k.angles.right.ankle;f.shoulderWidth3D=k.relations.shoulderWidth;f.handDistance3D=k.relations.handDistance;f.handShoulderRatio3D=k.relations.handShoulderRatio;f.leftHumerusTorso3D=k.relations.humerusTorso.left;f.rightHumerusTorso3D=k.relations.humerusTorso.right;}
-   this.frame={...k,features:f};
-   ui.trkPose.textContent="33 punti ✓";ui.trkHands.textContent=k.hands.length?`${k.hands.length} × 21 ✓`:(this.needsHands()?"ricerca…":"OFF");
-   ui.trkProfile.textContent=activeExercise.toUpperCase();ui.trk3d.textContent=k.world?"WORLD ✓":"2D fallback";ui.trkView.textContent=k.view.name;ui.trkConfidence.textContent=Math.round(k.view.confidence*100)+"%";
+   const pose=poseResult?.landmarks?.[0]||null;
+   const world=poseResult?.worldLandmarks?.[0]||null;
+   const hands=handResult?.landmarks||[];
+   const handWorld=handResult?.worldLandmarks||[];
+   const features=pose?this.computePoseFeatures(pose,world):{};
+   const view=pose?this.detectView(pose,world):{name:"--",confidence:0};
+   this.frame={time:performance.now(),pose,world,hands,handWorld,features,view};
+   ui.trkPose.textContent=pose?"33 punti ✓":"ricerca…";
+   ui.trkHands.textContent=hands.length?`${hands.length} × 21 ✓`:(this.needsHands()?"ricerca…":"OFF");
+   ui.trkProfile.textContent=activeExercise.toUpperCase();
+   ui.trk3d.textContent=world?"WORLD ✓":"2D fallback";
+   ui.trkView.textContent=view.name;
+   ui.trkConfidence.textContent=Math.round(view.confidence*100)+"%";
    return this.frame;
  },
  needsHands(){return ExerciseEngine.current?.trackers?.includes("hands")??false},
- closestHand(wrist){if(!this.frame?.hands?.length)return null;let best=null,bd=1e9;for(const h of this.frame.hands){const d=Math.hypot(h[0].x-wrist.x,h[0].y-wrist.y);if(d<bd){bd=d;best=h}}return bd<.20?best:null}
+ angle3(lm,a,b,c){return V3.angle(V3.sub(lm[a],lm[b]),V3.sub(lm[c],lm[b]))},
+ computePoseFeatures(p,w){
+   const f={}; const A=(a,b,c)=>angle2D(p[a],p[b],p[c]);
+   f.leftElbow=A(11,13,15);f.rightElbow=A(12,14,16);
+   f.leftShoulder=A(13,11,23);f.rightShoulder=A(14,12,24);
+   f.leftHip=A(11,23,25);f.rightHip=A(12,24,26);
+   f.leftKnee=A(23,25,27);f.rightKnee=A(24,26,28);
+   f.leftAnkle=A(25,27,31);f.rightAnkle=A(26,28,32);
+   f.shoulderWidth=Math.hypot(p[11].x-p[12].x,p[11].y-p[12].y);
+   f.handDistance=Math.hypot(p[15].x-p[16].x,p[15].y-p[16].y);
+   f.handShoulderRatio=f.shoulderWidth?f.handDistance/f.shoulderWidth:NaN;
+   f.shoulderTilt=Math.atan2(p[12].y-p[11].y,p[12].x-p[11].x)*180/Math.PI;
+   f.hipTilt=Math.atan2(p[24].y-p[23].y,p[24].x-p[23].x)*180/Math.PI;
+   f.torsoLean=Math.abs(Math.atan2(((p[11].x+p[12].x)/2)-((p[23].x+p[24].x)/2),
+                                  ((p[23].y+p[24].y)/2)-((p[11].y+p[12].y)/2))*180/Math.PI);
+   if(w){
+     f.leftElbow3D=this.angle3(w,11,13,15); f.rightElbow3D=this.angle3(w,12,14,16);
+     f.leftShoulder3D=this.angle3(w,13,11,23); f.rightShoulder3D=this.angle3(w,14,12,24);
+     f.leftHip3D=this.angle3(w,11,23,25); f.rightHip3D=this.angle3(w,12,24,26);
+     f.leftKnee3D=this.angle3(w,23,25,27); f.rightKnee3D=this.angle3(w,24,26,28);
+     f.leftAnkle3D=this.angle3(w,25,27,31); f.rightAnkle3D=this.angle3(w,26,28,32);
+     f.shoulderWidth3D=V3.dist(w[11],w[12]);
+     f.handDistance3D=V3.dist(w[15],w[16]);
+     f.handShoulderRatio3D=f.shoulderWidth3D?f.handDistance3D/f.shoulderWidth3D:NaN;
+     f.leftHumerusTorso3D=this.angle3(w,13,11,23);
+     f.rightHumerusTorso3D=this.angle3(w,14,12,24);
+   }
+   return f;
+ },
+ detectView(p,w){
+   // View-aware heuristic. It does not pretend to recover hidden anatomy:
+   // it estimates whether shoulder/hip geometry is frontal, oblique or side-like.
+   const sw=Math.abs(p[12].x-p[11].x), hw=Math.abs(p[24].x-p[23].x);
+   const torso=Math.max(.001,Math.hypot(((p[11].x+p[12].x)-(p[23].x+p[24].x))/2,
+                                      ((p[11].y+p[12].y)-(p[23].y+p[24].y))/2));
+   const ratio=((sw+hw)/2)/torso;
+   let name,conf;
+   if(ratio>.62){name="FRONTALE / POST.";conf=Math.min(.98,.65+(ratio-.62));}
+   else if(ratio>.28){name="3/4 · 30–60°";conf=.82;}
+   else{name="LATERALE";conf=Math.min(.96,.70+(.28-ratio));}
+   const vis=[11,12,23,24].map(i=>p[i]?.visibility??1).reduce((a,b)=>a+b,0)/4;
+   conf*=Math.max(.35,vis);
+   return {name,confidence:Math.max(0,Math.min(1,conf)),ratio};
+ },
+ closestHand(wrist){
+   if(!this.frame?.hands?.length)return null;
+   let best=null,bd=1e9;
+   for(const h of this.frame.hands){const d=Math.hypot(h[0].x-wrist.x,h[0].y-wrist.y);if(d<bd){bd=d;best=h}}
+   return bd<.20?best:null;
+ }
 };
 
 const MotionFeatures={
@@ -278,6 +269,10 @@ function buildSessionRecap(){
  ui.sessionRecap.classList.add("show");ui.sessionRecap.scrollIntoView({behavior:"smooth",block:"start"});
 }
 let pose,handLandmarker,drawer,stream,running=false,facing="environment",lastVideo=-1,smElbow=null,smKnee=null,reps=0,state="GET_READY",topFrames=0,extFrames=0,bottomFrames=0,standFrames=0,repStart=0,startElbowPos=null,startShoulderPos=null,lastFeedback="",activeExercise="curl";
+function newCurlArm(name,sh,el,wr,hip){return{name,sh,el,wr,hip,state:"GET_READY",smooth:null,topFrames:0,extFrames:0,repStart:0,startElbow:null,startShoulder:null,reps:0,lastRepMs:0}}
+let curlArms={left:newCurlArm("SX",11,13,15,23),right:newCurlArm("DX",12,14,16,24)};
+function resetCurlArms(){curlArms={left:newCurlArm("SX",11,13,15,23),right:newCurlArm("DX",12,14,16,24)}}
+
 // Voice Engine: Paola / Piper, dinamico e gratuito. Pipeline verificata nel test standalone.
 let voiceEnabled=true, voiceReady=false, currentVoiceAudio=null, voiceInitPromise=null;
 const PAOLA_MODEL="https://huggingface.co/rhasspy/piper-voices/resolve/main/it/it_IT/paola/medium/it_IT-paola-medium.onnx";
@@ -457,7 +452,7 @@ function invalidMovementCoach(isInvalid,text){
 
 async function init(){try{
  const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm");
- const base={modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",delegate:"GPU"};
+ const base={modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task",delegate:"GPU"};
  try{pose=await PoseLandmarker.createFromOptions(vision,{baseOptions:base,runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5})}
  catch{base.delegate="CPU";pose=await PoseLandmarker.createFromOptions(vision,{baseOptions:base,runningMode:"VIDEO",numPoses:1})}
  const hb={modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",delegate:"GPU"};
@@ -503,38 +498,79 @@ function showCurlDiag(m){
  ui.dWrist.textContent=m.wristFlex==null?"--":Math.round(m.wristFlex)+"°";
  ui.dPalm.textContent=m.forearmRotation==null?"--":Math.round(m.forearmRotation)+"°";
 }
-function analyzeCurl(lm){
- const s=chooseSide(lm),sh=lm[s.sh],el=lm[s.el],wr=lm[s.wr],hip=lm[s.hip];
- ui.side.textContent=s.name;
- if([sh,el,wr,hip].some(p=>(p.visibility||0)<CFG.VIS)){trackingCoach(true);fb("Inquadra meglio il braccio: devo vedere spalla, gomito, polso e fianco.","warn",false);return}
- trackingCoach(false);
- let ang=angle2D(sh,el,wr);smElbow=ema(smElbow,ang,CFG.EMA);ang=smElbow;ui.elbow.textContent=Math.round(ang)+"°";
- const validity=validateCurlPose(sh,el,wr,hip,state);
- invalidMovementCoach(!validity.valid,"Il movimento non corrisponde a un curl. Tieni il gomito vicino al fianco.");
+function analyzeCurlArm(lm,a){
+ const sh=lm[a.sh],el=lm[a.el],wr=lm[a.wr],hip=lm[a.hip];
+ if([sh,el,wr,hip].some(p=>(p?.visibility||0)<CFG.VIS))return {ok:false,arm:a};
+ let raw=angle2D(sh,el,wr);a.smooth=ema(a.smooth,raw,CFG.EMA);const ang=a.smooth;
+ const validity=validateCurlPose(sh,el,wr,hip,a.state);
  if(!validity.valid){
-   // Hard gate: a movement resembling an overhead/military press cannot
-   // advance or complete the curl state machine.
-   topFrames=0;extFrames=0;
-   if(state!=="GET_READY" && state!=="READY"){setState("GET_READY");repStart=0;startElbowPos=null;startShoulderPos=null}
-   fb(validity.overheadLike?"Movimento non valido per il curl: non sollevare il braccio verso la testa.":"Movimento non valido per il curl: tieni il gomito vicino al busto.","warn",false);
-   debug(`exercise=curl INVALID upperArm=${validity.upperArmRaise.toFixed(1)} elbowHip=${validity.elbowHip.toFixed(2)}`);
-   return;
+   a.topFrames=a.extFrames=0;
+   if(a.state!=="GET_READY"&&a.state!=="READY"){a.state="GET_READY";a.repStart=0;a.startElbow=a.startShoulder=null}
+   return {ok:true,valid:false,arm:a,ang,sh,el,wr,hip,validity};
  }
- const torso=Math.max(.08,dist(sh,hip));const elbowDrift=startElbowPos?dist(el,startElbowPos)/torso:0;const shoulderSwing=startShoulderPos?dist(sh,startShoulderPos)/torso:0;
+ const torso=Math.max(.08,dist(sh,hip));
+ const elbowDrift=a.startElbow?dist(el,a.startElbow)/torso:0;
+ const shoulderSwing=a.startShoulder?dist(sh,a.startShoulder)/torso:0;
  const hand=nearestHandToWrist(wr);
- const adv=curlAdvancedMetrics(sh,el,wr,hip,hand,startElbowPos,startShoulderPos);
- showCurlDiag(adv);
- collectRepTelemetry(ang,adv);
- ErrorCoach.update("curl-torso",(state==="CURL_UP"||state==="LOWER")?adv.torsoVertical>18:false,"Mantieni il busto più verticale");
- ErrorCoach.update("curl-wrist",(state==="CURL_UP"||state==="LOWER")&&adv.wristFlex!=null?adv.wristFlex>32:false,"Mantieni il polso più neutro");
- ErrorCoach.update("curl-elbow",state==="CURL_UP"||state==="LOWER"?elbowDrift>CFG.ELBOW_DRIFT:false,"Tieni fermo il gomito");
- ErrorCoach.update("curl-shoulder",state==="CURL_UP"||state==="LOWER"?shoulderSwing>CFG.SHOULDER_SWING:false,"Non aiutarti con la spalla");
- if(state==="GET_READY"){if(ang>CFG.EXTENDED){extFrames++;if(extFrames>=3){setState("READY");fb("Pronto. Fletti il gomito senza portarlo in avanti.","good")}}else{extFrames=0;fb("Distendi il braccio per iniziare.","warn")}}
- else if(state==="READY"){if(ang<CFG.START_CURL){repStart=performance.now();phaseUpStart=repStart;phaseTopAt=0;phaseDownStart=0;beginRepTelemetry();startElbowPos={x:el.x,y:el.y};startShoulderPos={x:sh.x,y:sh.y};topFrames=0;setState("CURL_UP");fb("Bene. Gomito fermo vicino al fianco.","good")}}
- else if(state==="CURL_UP"){if(elbowDrift>CFG.ELBOW_DRIFT)fb("Tieni il gomito fermo: non portarlo in avanti.","warn");else if(shoulderSwing>CFG.SHOULDER_SWING)fb("Non aiutarti con la spalla. Muovi solo l'avambraccio.","warn");else fb("Continua a salire.","good");if(ang<CFG.TOP){topFrames++;if(topFrames>=CFG.TOP_FRAMES){phaseTopAt=performance.now();if(repTelemetry&&phaseUpStart)repTelemetry.upMs=phaseTopAt-phaseUpStart;setState("TOP");ui.dVelocity.textContent=repTelemetry?.upMs?(repTelemetry.upMs/1000).toFixed(2)+"s ↑":"--";fb("Ottimo. Ora scendi controllando il manubrio.","good")}}else topFrames=0;if(performance.now()-repStart>CFG.MAX_REP){setState("GET_READY");fb("Ripartiamo: distendi completamente il braccio.","warn")}}
- else if(state==="TOP"){if(ang>CFG.TOP+15){phaseDownStart=performance.now();setState("LOWER");fb("Scendi lentamente fino a distendere il braccio.","good")}}
- else if(state==="LOWER"){if(elbowDrift>CFG.ELBOW_DRIFT)fb("Riporta il gomito vicino al fianco.","warn");if(ang>CFG.EXTENDED){extFrames++;if(extFrames>=CFG.EXT_FRAMES){const ms=performance.now()-repStart;if(ms>=CFG.MIN_REP&&ms<=CFG.MAX_REP){reps++;if(repTelemetry&&phaseDownStart)repTelemetry.downMs=performance.now()-phaseDownStart;finishRepTelemetry();ui.reps.textContent=reps;ui.tempo.textContent=(ms/1000).toFixed(1)+"s";fb("Ripetizione "+reps+". Bene.","good",false);speakText(String(reps),{force:true,key:"rep-"+reps,cooldown:0,maxAge:5000})}setState("READY");startElbowPos=null;startShoulderPos=null;extFrames=0}}else extFrames=0}
- debug(`exercise=curl state=${state} side=${s.name} elbow=${ang.toFixed(1)} drift=${elbowDrift.toFixed(2)} shoulder=${shoulderSwing.toFixed(2)}`)
+ const adv=curlAdvancedMetrics(sh,el,wr,hip,hand,a.startElbow,a.startShoulder);
+ const now=performance.now();let repEvent=false;
+ if(a.state==="GET_READY"){
+   if(ang>CFG.EXTENDED){if(++a.extFrames>=3){a.state="READY";a.extFrames=0}}else a.extFrames=0;
+ }else if(a.state==="READY"){
+   if(ang<CFG.START_CURL){a.repStart=now;a.startElbow={x:el.x,y:el.y};a.startShoulder={x:sh.x,y:sh.y};a.topFrames=0;a.state="CURL_UP";}
+ }else if(a.state==="CURL_UP"){
+   if(ang<CFG.TOP){if(++a.topFrames>=CFG.TOP_FRAMES){a.state="TOP";a.topFrames=0}}else a.topFrames=0;
+   if(now-a.repStart>CFG.MAX_REP){a.state="GET_READY";a.repStart=0}
+ }else if(a.state==="TOP"){
+   if(ang>CFG.TOP+15)a.state="LOWER";
+ }else if(a.state==="LOWER"){
+   if(ang>CFG.EXTENDED){
+     if(++a.extFrames>=CFG.EXT_FRAMES){
+       const ms=now-a.repStart;
+       if(ms>=CFG.MIN_REP&&ms<=CFG.MAX_REP){a.reps++;a.lastRepMs=ms;repEvent=true}
+       a.state="READY";a.startElbow=a.startShoulder=null;a.extFrames=0;
+     }
+   }else a.extFrames=0;
+ }
+ return {ok:true,valid:true,arm:a,ang,sh,el,wr,hip,adv,elbowDrift,shoulderSwing,repEvent};
+}
+function analyzeCurl(lm){
+ const L=analyzeCurlArm(lm,curlArms.left),R=analyzeCurlArm(lm,curlArms.right);
+ if(!L.ok&&!R.ok){trackingCoach(true);fb("Inquadra entrambe le braccia: devo vedere spalle, gomiti, polsi e fianchi.","warn",false);return}
+ trackingCoach(false);
+ const fmt=x=>x.ok&&Number.isFinite(x.ang)?Math.round(x.ang)+"°":"--";
+ ui.elbow.textContent=`SX ${fmt(L)} · DX ${fmt(R)}`;
+ ui.side.textContent=`SX ${curlArms.left.reps} · DX ${curlArms.right.reps}`;
+ const total=curlArms.left.reps+curlArms.right.reps;
+ reps=total;ui.reps.textContent=total;
+ ui.phase.textContent=`SX ${curlArms.left.state.replace("_"," ")} · DX ${curlArms.right.state.replace("_"," ")}`;
+ // Diagnostics show the arm currently moving most; both FSMs remain active.
+ const candidates=[L,R].filter(x=>x.ok&&x.valid&&x.adv);
+ if(candidates.length){
+   const moving=candidates.sort((a,b)=>Math.abs((b.ang??180)-180)-Math.abs((a.ang??180)-180))[0];
+   showCurlDiag(moving.adv);
+ }
+ for(const x of [L,R]){
+   if(!x.ok)continue;
+   if(!x.valid){
+     ErrorCoach.update(`curl-invalid-${x.arm.name}`,true,`${x.arm.name}: tieni il gomito vicino al fianco`);
+     continue;
+   }else ErrorCoach.update(`curl-invalid-${x.arm.name}`,false,"");
+   const active=x.arm.state==="CURL_UP"||x.arm.state==="LOWER";
+   ErrorCoach.update(`curl-elbow-${x.arm.name}`,active&&x.elbowDrift>CFG.ELBOW_DRIFT,`${x.arm.name}: tieni fermo il gomito`);
+   ErrorCoach.update(`curl-shoulder-${x.arm.name}`,active&&x.shoulderSwing>CFG.SHOULDER_SWING,`${x.arm.name}: non aiutarti con la spalla`);
+   ErrorCoach.update(`curl-wrist-${x.arm.name}`,active&&x.adv?.wristFlex!=null&&x.adv.wristFlex>32,`${x.arm.name}: mantieni il polso più neutro`);
+   if(x.repEvent){
+     reps=curlArms.left.reps+curlArms.right.reps;ui.reps.textContent=reps;
+     ui.side.textContent=`SX ${curlArms.left.reps} · DX ${curlArms.right.reps}`;
+     ui.tempo.textContent=(x.arm.lastRepMs/1000).toFixed(1)+"s";
+     fb(`Ripetizione ${reps}. ${x.arm.name}.`,"good",false);
+     speakText(String(reps),{force:true,key:"rep-"+reps,cooldown:0,maxAge:5000});
+   }
+ }
+ if((L.ok&&!L.valid)||(R.ok&&!R.valid))fb("Movimento non valido su uno dei due lati: mantieni il gomito vicino al busto.","warn",false);
+ else fb(`Curl duale attivo · SX ${curlArms.left.reps} · DX ${curlArms.right.reps} · totale ${reps}`,"good",false);
+ debug(`curl DUAL | SX ${fmt(L)} ${curlArms.left.state} rep=${curlArms.left.reps} | DX ${fmt(R)} ${curlArms.right.state} rep=${curlArms.right.reps}`);
 }
 function chooseLeg(lm){
  const score=s=>[23+s,25+s,27+s,29+s].reduce((n,i)=>n+(lm[i]?.visibility||0),0);
@@ -586,7 +622,7 @@ function reset(){
  if(typeof VoiceManager!=="undefined")VoiceManager.reset();
  if(typeof ErrorCoach!=="undefined")ErrorCoach.clear();
  trackingLostSince=0;trackingLostSpoken=false;
- reps=0;ui.reps.textContent="0";ui.tempo.textContent="--";sessionStart=performance.now();sessionReps=[];repTelemetry=null;phaseUpStart=phaseTopAt=phaseDownStart=0;ui.dVelocity.textContent="--";ui.sessionRecap.classList.remove("show");ui.rCoach.innerHTML="<b>COACH:</b> il commento apparirà a fine sessione.";lastHands=null;lastHandRun=0;MotionFeatures.clear();["dTorso","dElbowDrift","dShoulder","dHand","dWrist","dPalm"].forEach(k=>ui[k].textContent="--");smElbow=null;smKnee=null;topFrames=extFrames=bottomFrames=standFrames=0;repStart=0;startElbowPos=startShoulderPos=null;lastFeedback="";setState("GET_READY");
+ reps=0;resetCurlArms();ui.reps.textContent="0";ui.tempo.textContent="--";sessionStart=performance.now();sessionReps=[];repTelemetry=null;phaseUpStart=phaseTopAt=phaseDownStart=0;ui.dVelocity.textContent="--";ui.sessionRecap.classList.remove("show");ui.rCoach.innerHTML="<b>COACH:</b> il commento apparirà a fine sessione.";lastHands=null;lastHandRun=0;MotionFeatures.clear();["dTorso","dElbowDrift","dShoulder","dHand","dWrist","dPalm"].forEach(k=>ui[k].textContent="--");smElbow=null;smKnee=null;topFrames=extFrames=bottomFrames=standFrames=0;repStart=0;startElbowPos=startShoulderPos=null;lastFeedback="";setState("GET_READY");
  const p=EXERCISE_PROFILES[activeExercise]||EXERCISE_PROFILES.curl;
  fb(`Reset ${p.name}. Preparati nella posizione iniziale.`,"",false);
 }
@@ -604,5 +640,4 @@ $("testVoice").onclick=async()=>{
 $("switch").onclick=async()=>{facing=facing==="environment"?"user":"environment";if(running){running=false;stopStream();await startCamera()}};$("reset").onclick=reset;if(!window.isSecureContext){status("HTTPS RICHIESTO","bad");fb("Apri l'app tramite HTTPS.","bad")}init();
 
 window.getBiomechanicalFrame=()=>BodyTracker.frame;
-window.getKinematicBody=()=>KinematicBody.frame;
 </script></body></html>
