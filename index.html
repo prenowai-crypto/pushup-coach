@@ -1,4 +1,4 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V10R.3 Debug Session Recap</title>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V10R.4 Debug Timeline</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}.recap{display:none;margin-top:12px;background:#151a21;border:1px solid #303947;border-radius:16px;padding:14px}
 .recap.show{display:block}.recap h2{margin:0 0 10px;font-size:16px}.recapTop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .recapBox{background:#10151b;border-radius:11px;padding:10px;text-align:center}.recapBox b{display:block;font-size:20px}.recapBox span{font-size:9px;color:#8e99a8}
@@ -9,7 +9,7 @@
 color:#fff;padding:9px 11px;border-radius:10px;font:700 13px/1.45 system-ui;pointer-events:none;
 backdrop-filter:blur(4px);min-width:190px}
 #relTelemetry .l{color:#62e6a7} #relTelemetry .r{color:#ffd166}
-</style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V10R.3 · Debug Session Recap</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div id="relTelemetry">
+</style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V10R.4 · Debug Timeline</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div id="relTelemetry">
 <div style="margin-bottom:5px">RELATIONSHIP DEBUG</div>
 <select id="relSelect" style="font:inherit;max-width:180px;margin-bottom:5px">
 <option value="handHip">Mano → bacino</option>
@@ -763,6 +763,28 @@ const DebugSession={
   const L=this.stats(lkey),R=this.stats(rkey),f=x=>x?`${x.min.toFixed(3)} – ${x.max.toFixed(3)} · media ${x.avg.toFixed(3)}`:"--";
   return `<tr><td>${name}</td><td>${f(L)}</td><td>${f(R)}</td><td>${unit}</td></tr>`;
  },
+ drawChart(id,leftKey,rightKey){
+  const c=document.getElementById(id);if(!c||this.samples.length<2)return;
+  const ctx=c.getContext("2d"),W=c.width,H=c.height,pad={l:48,r:16,t:18,b:30};
+  const rows=this.samples.filter(x=>Number.isFinite(x[leftKey])||Number.isFinite(x[rightKey]));
+  if(rows.length<2)return;
+  const vals=rows.flatMap(x=>[x[leftKey],x[rightKey]]).filter(Number.isFinite);
+  let lo=Math.min(...vals),hi=Math.max(...vals);if(hi-lo<.05){lo-=.025;hi+=.025}
+  const t0=rows[0].t,t1=rows[rows.length-1].t, X=t=>pad.l+(t-t0)/Math.max(1,t1-t0)*(W-pad.l-pad.r);
+  const Y=v=>H-pad.b-(v-lo)/(hi-lo)*(H-pad.t-pad.b);
+  ctx.clearRect(0,0,W,H);ctx.font="12px system-ui";ctx.fillStyle="rgba(255,255,255,.75)";
+  ctx.strokeStyle="rgba(255,255,255,.15)";ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){let y=pad.t+i*(H-pad.t-pad.b)/4,v=hi-i*(hi-lo)/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillText(v.toFixed(2),5,y+4)}
+  ctx.fillText("0s",pad.l,H-8);ctx.fillText(((t1-t0)/1000).toFixed(1)+"s",W-55,H-8);
+  const plot=(key,dash)=>{
+    ctx.save();ctx.strokeStyle="white";ctx.lineWidth=3;ctx.setLineDash(dash);ctx.beginPath();let started=false;
+    for(const x of rows){let v=x[key];if(!Number.isFinite(v))continue;let px=X(x.t),py=Y(v);if(!started){ctx.moveTo(px,py);started=true}else ctx.lineTo(px,py)}
+    ctx.stroke();ctx.restore();
+  };
+  plot(leftKey,[]);plot(rightKey,[9,6]);
+  ctx.fillStyle="white";ctx.fillText("SX",W-95,18);ctx.setLineDash([9,6]);ctx.beginPath();ctx.moveTo(W-125,14);ctx.lineTo(W-102,14);ctx.strokeStyle="white";ctx.stroke();ctx.setLineDash([]);
+  ctx.fillText("DX",W-35,18);
+ },
  render(){
   const sec=Math.max(0,(performance.now()-this.start)/1000), n=this.samples.length;
   const E=this.stats("ea"),K=this.stats("ka"),H=this.stats("hd"),F=this.stats("fd");
@@ -778,6 +800,11 @@ const DebugSession={
     ${this.row("Angolo gomito","la","ra","gradi")}
    </tbody>
   </table></div>
+  <h3 style="margin:18px 0 8px">Timeline · Mano → bacino</h3>
+  <canvas id="debugChartHandHip" width="700" height="220" style="width:100%;background:#0d1218;border-radius:10px"></canvas>
+  <h3 style="margin:18px 0 8px">Timeline · Gomito → torso</h3>
+  <canvas id="debugChartElbowTorso" width="700" height="220" style="width:100%;background:#0d1218;border-radius:10px"></canvas>
+  <div style="font-size:13px;opacity:.8;margin-top:6px">SX = linea continua · DX = linea tratteggiata. I picchi isolati sono facili da distinguere da una posizione mantenuta.</div>
   <hr style="opacity:.2;margin:16px 0">
   <div><b>Distanza mani:</b> ${f(H)} × spalle</div>
   <div><b>Distanza piedi:</b> ${f(F)} × anche</div>
@@ -790,6 +817,7 @@ setInterval(()=>{if(running&&UniversalBody.frame)DebugSession.push()},100);
 document.getElementById("debugRecapBtn").onclick=()=>{
  document.getElementById("debugRecapContent").innerHTML=DebugSession.render();
  document.getElementById("debugRecapModal").style.display="block";
+ requestAnimationFrame(()=>{DebugSession.drawChart("debugChartHandHip","lh","rh");DebugSession.drawChart("debugChartElbowTorso","le","re")});
 };
 document.getElementById("debugClose").onclick=()=>document.getElementById("debugRecapModal").style.display="none";
 document.getElementById("debugReset").onclick=()=>{DebugSession.reset();document.getElementById("debugRecapContent").innerHTML=DebugSession.render()};
