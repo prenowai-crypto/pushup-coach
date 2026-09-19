@@ -1,1357 +1,176 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#08090c">
-
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-  <title>Push-Up Coach V2.1</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      min-height: 100%;
-      background: #08090c;
-      color: white;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    body {
-      min-height: 100dvh;
-    }
-
-    .app {
-      width: min(100%, 820px);
-      margin: 0 auto;
-      padding:
-        max(12px, env(safe-area-inset-top))
-        12px
-        max(18px, env(safe-area-inset-bottom));
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    h1 {
-      font-size: 20px;
-      margin: 0;
-    }
-
-    .status {
-      padding: 7px 11px;
-      border-radius: 999px;
-      background: #20232b;
-      font-size: 12px;
-      white-space: nowrap;
-    }
-
-    .status.ok {
-      background: #123b25;
-      color: #8ff0b3;
-    }
-
-    .status.error {
-      background: #461919;
-      color: #ff9b9b;
-    }
-
-    .camera {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 3 / 4;
-      max-height: 70dvh;
-      overflow: hidden;
-      border-radius: 20px;
-      background: #11141a;
-    }
-
-    video,
-    canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    /*
-      Non specchiamo la camera posteriore.
-      Se viene selezionata quella frontale,
-      JS applicherà la classe .mirror.
-    */
-
-    .mirror {
-      transform: scaleX(-1);
-    }
-
-    canvas {
-      pointer-events: none;
-    }
-
-    .topOverlay {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      z-index: 10;
-      display: flex;
-      justify-content: space-between;
-      pointer-events: none;
-    }
-
-    .badge {
-      padding: 8px 11px;
-      background: rgba(0,0,0,.68);
-      border-radius: 999px;
-      backdrop-filter: blur(8px);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .repBox {
-      position: absolute;
-      right: 12px;
-      bottom: 12px;
-      z-index: 10;
-      min-width: 88px;
-      padding: 12px;
-      text-align: center;
-      background: rgba(0,0,0,.78);
-      border-radius: 18px;
-      backdrop-filter: blur(10px);
-    }
-
-    .repNumber {
-      font-size: 44px;
-      line-height: 1;
-      font-weight: 800;
-    }
-
-    .repLabel {
-      margin-top: 5px;
-      font-size: 9px;
-      color: #999;
-      letter-spacing: .08em;
-    }
-
-    .instruction {
-      position: absolute;
-      left: 12px;
-      bottom: 12px;
-      z-index: 10;
-      max-width: 65%;
-      padding: 9px 11px;
-      background: rgba(0,0,0,.72);
-      border-radius: 12px;
-      font-size: 12px;
-    }
-
-    .metrics {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 9px;
-    }
-
-    .metric {
-      padding: 11px 8px;
-      background: #11141a;
-      border-radius: 14px;
-      text-align: center;
-    }
-
-    .metricLabel {
-      color: #858b98;
-      font-size: 10px;
-      text-transform: uppercase;
-    }
-
-    .metricValue {
-      margin-top: 4px;
-      font-size: 21px;
-      font-weight: 750;
-    }
-
-    .feedback {
-      margin-top: 9px;
-      min-height: 55px;
-      padding: 15px;
-      display: flex;
-      align-items: center;
-      background: #11141a;
-      border-radius: 14px;
-      font-size: 14px;
-    }
-
-    .feedback.good {
-      border-left: 4px solid #3cdb78;
-    }
-
-    .feedback.warn {
-      border-left: 4px solid #ffb02e;
-    }
-
-    .feedback.bad {
-      border-left: 4px solid #ff5050;
-    }
-
-    .controls {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
-      gap: 8px;
-      margin-top: 9px;
-    }
-
-    button {
-      min-height: 50px;
-      border: 0;
-      border-radius: 14px;
-      font-weight: 800;
-      font-size: 14px;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-
-    #startBtn {
-      background: white;
-      color: black;
-    }
-
-    #cameraBtn,
-    #resetBtn {
-      background: #1d2431;
-      color: white;
-    }
-
-    .debug {
-      margin-top: 10px;
-      color: #707783;
-      font-size: 11px;
-      line-height: 1.5;
-    }
-
-    @media (orientation: landscape) and (max-height: 600px) {
-      .camera {
-        aspect-ratio: 16 / 9;
-        max-height: 65dvh;
-      }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07090d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Push-Up Coach V3</title>
+<style>
+*{box-sizing:border-box} html,body{margin:0;background:#07090d;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100dvh}.app{width:min(100%,860px);margin:auto;padding:max(10px,env(safe-area-inset-top)) 10px max(16px,env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}h1{font-size:19px;margin:0}.pill{font-size:12px;padding:7px 10px;border-radius:999px;background:#202631}.ok{background:#123b25;color:#8ff0b3}.err{background:#491b1b;color:#ff9c9c}
+.stage{position:relative;aspect-ratio:3/4;max-height:68dvh;border-radius:18px;overflow:hidden;background:#11151d}
+video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}canvas{pointer-events:none}.mirror{transform:scaleX(-1)}
+.top{position:absolute;z-index:3;left:10px;right:10px;top:10px;display:flex;justify-content:space-between}.badge{background:#000b;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:800}
+.rep{position:absolute;z-index:3;right:12px;bottom:12px;background:#000d;border-radius:18px;padding:10px 14px;text-align:center}.rep b{font-size:46px;line-height:1}.rep small{display:block;color:#999;font-size:9px;margin-top:4px}
+.guide{position:absolute;z-index:3;left:12px;bottom:12px;max-width:65%;background:#000b;border-radius:12px;padding:9px 10px;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:8px}.card{background:#11151d;border-radius:13px;padding:9px 6px;text-align:center}.card small{display:block;color:#858c99;font-size:9px;text-transform:uppercase}.card b{display:block;font-size:19px;margin-top:3px}
+.feedback{margin-top:8px;background:#11151d;border-radius:13px;padding:13px;min-height:48px;font-size:14px}.good{border-left:4px solid #3cdb78}.warn{border-left:4px solid #ffb02e}.bad{border-left:4px solid #ff5050}
+.controls{display:grid;grid-template-columns:2fr 1fr 1fr;gap:7px;margin-top:8px}button{border:0;border-radius:13px;min-height:49px;font-weight:800;font-size:14px;touch-action:manipulation}#start{background:#fff;color:#000}#switch,#reset{background:#1d2431;color:#fff}
+.debug{margin-top:8px;padding:9px;background:#0d1016;border-radius:10px;color:#9ca4b2;font:11px ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.45}
+@media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(orientation:landscape) and (max-height:650px){.stage{aspect-ratio:16/9;max-height:63dvh}}
+</style>
 </head>
-
-<body>
-
-<div class="app">
-
-  <header>
-    <h1>Push-Up Coach V2.1</h1>
-    <div id="status" class="status">Pronto</div>
-  </header>
-
-  <div class="camera">
-
-    <video
-      id="video"
-      playsinline
-      muted
-      autoplay>
-    </video>
-
-    <canvas id="canvas"></canvas>
-
-    <div class="topOverlay">
-      <div id="phase" class="badge">READY</div>
-      <div id="fps" class="badge">0 FPS</div>
-    </div>
-
-    <div class="instruction">
-      📱 Posiziona il telefono di lato e inquadra tutto il corpo.
-    </div>
-
-    <div class="repBox">
-      <div id="reps" class="repNumber">0</div>
-      <div class="repLabel">RIPETIZIONI</div>
-    </div>
-
-  </div>
-
-  <div class="metrics">
-
-    <div class="metric">
-      <div class="metricLabel">Gomito</div>
-      <div id="elbowValue" class="metricValue">--°</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricLabel">Linea corpo</div>
-      <div id="bodyValue" class="metricValue">--°</div>
-    </div>
-
-    <div class="metric">
-      <div class="metricLabel">Tempo rep</div>
-      <div id="tempoValue" class="metricValue">--</div>
-    </div>
-
-  </div>
-
-  <div id="feedback" class="feedback">
-    Premi AVVIA e consenti l'accesso alla fotocamera.
-  </div>
-
-  <div class="controls">
-    <button id="startBtn">AVVIA</button>
-    <button id="cameraBtn">CAMERA</button>
-    <button id="resetBtn">RESET</button>
-  </div>
-
-  <div id="debug" class="debug">
-    Versione V2.1 • MediaPipe Pose • elaborazione locale
-  </div>
-
+<body><div class="app">
+<header><h1>Push-Up Coach V3</h1><div id="status" class="pill">Pronto</div></header>
+<div class="stage">
+<video id="video" playsinline muted autoplay></video><canvas id="canvas"></canvas>
+<div class="top"><div id="phase" class="badge">GET READY</div><div id="fps" class="badge">0 FPS</div></div>
+<div class="guide">📱 Ripresa laterale. Corpo intero visibile. Parti con braccia distese.</div>
+<div class="rep"><b id="reps">0</b><small>RIPETIZIONI</small></div>
 </div>
-
-
+<div class="grid">
+<div class="card"><small>Gomito</small><b id="elbow">--°</b></div>
+<div class="card"><small>Linea corpo</small><b id="body">--°</b></div>
+<div class="card"><small>Profondità min</small><b id="depth">--°</b></div>
+<div class="card"><small>Tempo rep</small><b id="tempo">--</b></div>
+</div>
+<div id="feedback" class="feedback">Premi AVVIA e consenti la fotocamera.</div>
+<div class="controls"><button id="start">AVVIA</button><button id="switch">CAMERA</button><button id="reset">RESET</button></div>
+<div id="debug" class="debug">V3 • attesa avvio</div>
+</div>
 <script type="module">
+import {PoseLandmarker,FilesetResolver,DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm";
 
-import {
-  PoseLandmarker,
-  FilesetResolver,
-  DrawingUtils
-} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm";
-
-
-/* =========================================================
-   DOM
-========================================================= */
-
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-const startBtn = document.getElementById("startBtn");
-const cameraBtn = document.getElementById("cameraBtn");
-const resetBtn = document.getElementById("resetBtn");
-
-const statusEl = document.getElementById("status");
-const phaseEl = document.getElementById("phase");
-const fpsEl = document.getElementById("fps");
-
-const repsEl = document.getElementById("reps");
-const elbowValueEl = document.getElementById("elbowValue");
-const bodyValueEl = document.getElementById("bodyValue");
-const tempoValueEl = document.getElementById("tempoValue");
-
-const feedbackEl = document.getElementById("feedback");
-const debugEl = document.getElementById("debug");
-
-
-/* =========================================================
-   CONFIGURAZIONE
-========================================================= */
-
-const CONFIG = {
-  upAngle: 155,
-  downAngle: 115,
-  bottomAngle: 92,
-
-  goodBodyAngle: 160,
-
-  visibility: 0.45,
-
-  smoothing: 0.58,
-
-  minRepMs: 550,
-  maxRepMs: 8000
+const $=id=>document.getElementById(id);
+const video=$("video"),canvas=$("canvas"),ctx=canvas.getContext("2d");
+const ui={status:$("status"),phase:$("phase"),fps:$("fps"),reps:$("reps"),elbow:$("elbow"),body:$("body"),depth:$("depth"),tempo:$("tempo"),feedback:$("feedback"),debug:$("debug")};
+const C={
+  VIS:0.45, READY_BODY:145, GOOD_BODY:150,
+  UP:155, START:140, DOWN:95,
+  DOWN_FRAMES:2, UP_FRAMES:2, READY_FRAMES:3,
+  EMA:0.50, MIN_REP_MS:650, MAX_REP_MS:8000
 };
+let pose=null,drawer=null,stream=null,running=false,facing="environment",lastVideo=-1;
+let reps=0,state="GET_READY",smoothElbow=null,smoothBody=null,downFrames=0,upFrames=0,readyFrames=0;
+let repStart=0,bottomAt=0,minElbow=180,fullDepth=false,frames=0,fpsT=performance.now();
 
-
-/* =========================================================
-   STATO APP
-========================================================= */
-
-let poseLandmarker = null;
-let drawingUtils = null;
-
-let stream = null;
-let running = false;
-
-let facingMode = "environment";
-let mirrored = false;
-
-let reps = 0;
-
-let state = "READY";
-
-let elbowSmooth = null;
-let bodySmooth = null;
-
-let repStartTime = null;
-let bottomReached = false;
-let minimumElbowThisRep = 180;
-
-let lastVideoTime = -1;
-
-let frames = 0;
-let fpsTimestamp = performance.now();
-
-
-/* =========================================================
-   UI HELPERS
-========================================================= */
-
-function setStatus(text, type = "") {
-  statusEl.textContent = text;
-  statusEl.className = "status " + type;
+function status(t,c=""){ui.status.textContent=t;ui.status.className="pill "+c}
+function feedback(t,c=""){ui.feedback.textContent=t;ui.feedback.className="feedback "+c}
+function setState(s){state=s;ui.phase.textContent=s.replace("_"," ")}
+function debug(t){ui.debug.textContent=t}
+function vis(p){return p?.visibility ?? 1}
+function ema(prev,cur){return prev==null?cur:C.EMA*cur+(1-C.EMA)*prev}
+function angle2D(a,b,c){
+  let r=Math.abs(Math.atan2(c.y-b.y,c.x-b.x)-Math.atan2(a.y-b.y,a.x-b.x))*180/Math.PI;
+  if(r>180)r=360-r; return r;
 }
-
-function setFeedback(text, type = "") {
-  feedbackEl.textContent = text;
-  feedbackEl.className = "feedback " + type;
+function sideData(p,L){
+  const s=p[L?11:12],e=p[L?13:14],w=p[L?15:16],h=p[L?23:24],a=p[L?27:28];
+  return {s,e,w,h,a,score:vis(s)+vis(e)+vis(w)+vis(h)+vis(a)};
 }
+function validSide(x){return [x.s,x.e,x.w,x.h,x.a].every(q=>vis(q)>=C.VIS)}
+function stopStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+function mirror(){const m=facing==="user";video.classList.toggle("mirror",m);canvas.classList.toggle("mirror",m)}
 
-function setState(newState) {
-  state = newState;
-  phaseEl.textContent = newState;
-}
-
-function setDebug(text) {
-  debugEl.textContent = text;
-}
-
-
-/* =========================================================
-   MEDIAPIPE
-========================================================= */
-
-async function initMediaPipe() {
-
-  if (poseLandmarker) {
-    return;
+async function initPose(){
+  if(pose)return;
+  status("Caricamento AI...");
+  const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm");
+  try{
+    pose=await PoseLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",delegate:"GPU"},runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5});
+  }catch(e){
+    pose=await PoseLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",delegate:"CPU"},runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5});
   }
-
-  setStatus("Caricamento AI...");
-  setFeedback("Sto caricando il modello di riconoscimento...", "");
-
-  const vision = await FilesetResolver.forVisionTasks(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm"
-  );
-
-  poseLandmarker = await PoseLandmarker.createFromOptions(
-    vision,
-    {
-      baseOptions: {
-        modelAssetPath:
-          "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-        delegate: "GPU"
-      },
-
-      runningMode: "VIDEO",
-
-      numPoses: 1,
-
-      minPoseDetectionConfidence: 0.5,
-      minPosePresenceConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-
-      outputSegmentationMasks: false
-    }
-  );
-
-  drawingUtils = new DrawingUtils(ctx);
-
-  setStatus("AI pronta", "ok");
+  drawer=new DrawingUtils(ctx); status("AI pronta","ok");
 }
-
-
-/* =========================================================
-   CAMERA
-========================================================= */
-
-async function startCamera() {
-
-  try {
-
-    startBtn.disabled = true;
-    startBtn.textContent = "CARICAMENTO...";
-
-    setStatus("Avvio...");
-    setDebug("Inizializzazione MediaPipe...");
-
-    await initMediaPipe();
-
-    setDebug("Richiesta permesso fotocamera...");
-
-    if (
-      !navigator.mediaDevices ||
-      !navigator.mediaDevices.getUserMedia
-    ) {
-      throw new Error(
-        "Questo browser non supporta getUserMedia."
-      );
-    }
-
-    if (stream) {
-      stopStream();
-    }
-
-    const constraints = {
-      audio: false,
-
-      video: {
-        facingMode: {
-          ideal: facingMode
-        },
-
-        width: {
-          ideal: 1280
-        },
-
-        height: {
-          ideal: 720
-        }
-      }
-    };
-
-    stream = await navigator.mediaDevices.getUserMedia(
-      constraints
-    );
-
-    video.srcObject = stream;
-
-    await video.play();
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    mirrored = facingMode === "user";
-
-    updateMirror();
-
-    running = true;
-
-    lastVideoTime = -1;
-
-    setStatus("Camera attiva", "ok");
-
-    setFeedback(
-      "Camera attiva. Posizionati di lato con tutto il corpo visibile.",
-      "good"
-    );
-
-    setDebug(
-      "Camera: " +
-      video.videoWidth +
-      "×" +
-      video.videoHeight +
-      " • " +
-      facingMode
-    );
-
-    startBtn.textContent = "ATTIVA";
-    startBtn.disabled = false;
-
-    requestAnimationFrame(predict);
-
-  } catch (error) {
-
-    console.error(error);
-
-    running = false;
-
-    startBtn.disabled = false;
-    startBtn.textContent = "RIPROVA";
-
-    setStatus("Errore", "error");
-
-    let message = error.message || String(error);
-
-    if (error.name === "NotAllowedError") {
-      message =
-        "Permesso fotocamera negato. Consenti l'accesso alla fotocamera nelle impostazioni del browser.";
-    }
-
-    if (error.name === "NotFoundError") {
-      message =
-        "Nessuna fotocamera disponibile.";
-    }
-
-    setFeedback(message, "bad");
-
-    setDebug(
-      "ERRORE: " +
-      error.name +
-      " • " +
-      (error.message || "")
-    );
-  }
-}
-
-
-function stopStream() {
-
-  if (!stream) {
-    return;
-  }
-
-  stream.getTracks().forEach(track => {
-    track.stop();
-  });
-
-  stream = null;
-}
-
-
-function updateMirror() {
-
-  if (mirrored) {
-    video.classList.add("mirror");
-    canvas.classList.add("mirror");
-  } else {
-    video.classList.remove("mirror");
-    canvas.classList.remove("mirror");
-  }
-}
-
-
-/* =========================================================
-   CAMBIO CAMERA
-========================================================= */
-
-async function switchCamera() {
-
-  facingMode =
-    facingMode === "environment"
-      ? "user"
-      : "environment";
-
-  if (running) {
-
-    running = false;
-
+async function startCamera(){
+  try{
+    $("start").disabled=true;$("start").textContent="CARICAMENTO...";
+    await initPose();
+    if(!navigator.mediaDevices?.getUserMedia)throw new Error("Fotocamera browser non disponibile.");
     stopStream();
-
-    await startCamera();
+    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}}});
+    video.srcObject=stream;await video.play();canvas.width=video.videoWidth;canvas.height=video.videoHeight;mirror();
+    running=true;lastVideo=-1;status("Camera attiva","ok");feedback("Mettiti in plank laterale con le braccia distese.","good");
+    $("start").disabled=false;$("start").textContent="ATTIVA";requestAnimationFrame(loop);
+  }catch(e){
+    console.error(e);running=false;status("Errore","err");feedback((e.name==="NotAllowedError"?"Permesso fotocamera negato.":e.message),"bad");debug("ERRORE "+e.name+": "+e.message);$("start").disabled=false;$("start").textContent="RIPROVA";
   }
 }
-
-
-/* =========================================================
-   LOOP
-========================================================= */
-
-function predict() {
-
-  if (!running) {
-    return;
-  }
-
-  if (
-    video.readyState >= 2 &&
-    video.currentTime !== lastVideoTime
-  ) {
-
-    lastVideoTime = video.currentTime;
-
-    const now = performance.now();
-
-    try {
-
-      const result =
-        poseLandmarker.detectForVideo(
-          video,
-          now
-        );
-
-      drawPose(result);
-
-      analyzePose(result);
-
-      updateFPS();
-
-    } catch (error) {
-
-      console.error(error);
-
-      setDebug(
-        "Errore tracking: " +
-        error.message
-      );
-    }
-  }
-
-  requestAnimationFrame(predict);
+function draw(result){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(!result.landmarks?.length)return;
+  drawer.drawConnectors(result.landmarks[0],PoseLandmarker.POSE_CONNECTIONS,{lineWidth:3});
+  drawer.drawLandmarks(result.landmarks[0],{radius:4});
 }
-
-
-/* =========================================================
-   DISEGNO SKELETON
-========================================================= */
-
-function drawPose(result) {
-
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  if (
-    !result.landmarks ||
-    result.landmarks.length === 0
-  ) {
-    return;
-  }
-
-  const landmarks =
-    result.landmarks[0];
-
-  drawingUtils.drawConnectors(
-    landmarks,
-    PoseLandmarker.POSE_CONNECTIONS,
-    {
-      lineWidth: 3
-    }
-  );
-
-  drawingUtils.drawLandmarks(
-    landmarks,
-    {
-      radius: 4
-    }
-  );
+function analyze(result){
+  if(!result.landmarks?.length){setState("NO_BODY");feedback("Non vedo il corpo: allontana il telefono.","warn");return}
+  const p=result.landmarks[0],L=sideData(p,true),R=sideData(p,false);
+  let side=L.score>=R.score?L:R,sideName=L.score>=R.score?"SX":"DX";
+  if(!validSide(side)){setState("TRACKING");feedback("Servono spalla, gomito, polso, anca e caviglia visibili.","warn");return}
+  // 2D angle, come nei push-up counter di riferimento. La ripresa deve essere laterale.
+  smoothElbow=ema(smoothElbow,angle2D(side.s,side.e,side.w));
+  smoothBody=ema(smoothBody,angle2D(side.s,side.h,side.a));
+  ui.elbow.textContent=Math.round(smoothElbow)+"°";ui.body.textContent=Math.round(smoothBody)+"°";
+  updateFSM(smoothElbow,smoothBody);
+  debug(`lato ${sideName} | stato ${state} | gomito ${smoothElbow.toFixed(1)}° | corpo ${smoothBody.toFixed(1)}° | downFrames ${downFrames} | upFrames ${upFrames}`);
 }
-
-
-/* =========================================================
-   ANALISI PUSH-UP
-========================================================= */
-
-function analyzePose(result) {
-
-  if (
-    !result.landmarks ||
-    result.landmarks.length === 0
-  ) {
-
-    setState("NO BODY");
-
-    setFeedback(
-      "Non vedo il corpo. Allontana il telefono.",
-      "warn"
-    );
-
+function updateFSM(elbow,body){
+  const now=performance.now();
+  // Reacquire valid start position. We don't reset a rep merely because body angle dips during movement.
+  if(["GET_READY","NO_BODY","TRACKING"].includes(state)){
+    if(body>C.READY_BODY && elbow>C.UP){readyFrames++; if(readyFrames>=C.READY_FRAMES){setState("READY");feedback("Pronto. Scendi fino a portare il gomito sotto ~95°.","good");}}
+    else{readyFrames=0;feedback(body<=C.READY_BODY?"Allinea spalle, anche e caviglie.":"Distendi le braccia per iniziare.","warn")}
     return;
   }
-
-  const p = result.landmarks[0];
-
-  const left = {
-    shoulder: p[11],
-    elbow: p[13],
-    wrist: p[15],
-    hip: p[23],
-    ankle: p[27]
-  };
-
-  const right = {
-    shoulder: p[12],
-    elbow: p[14],
-    wrist: p[16],
-    hip: p[24],
-    ankle: p[28]
-  };
-
-  const leftScore = visibilityScore(left);
-  const rightScore = visibilityScore(right);
-
-  const side =
-    leftScore >= rightScore
-      ? left
-      : right;
-
-  const sideName =
-    leftScore >= rightScore
-      ? "SX"
-      : "DX";
-
-  if (!sideVisible(side)) {
-
-    setState("TRACKING");
-
-    setFeedback(
-      "Devo vedere spalla, gomito, polso, anca e caviglia.",
-      "warn"
-    );
-
+  if(state==="READY"){
+    if(elbow<C.START){setState("DESCENT");repStart=now;bottomAt=0;minElbow=elbow;fullDepth=false;downFrames=0;upFrames=0;feedback("Discesa…","")}
     return;
   }
-
-
-  /* ---------- ANGOLI ---------- */
-
-  const elbowRaw = angle(
-    side.shoulder,
-    side.elbow,
-    side.wrist
-  );
-
-  const bodyRaw = angle(
-    side.shoulder,
-    side.hip,
-    side.ankle
-  );
-
-  elbowSmooth = ema(
-    elbowSmooth,
-    elbowRaw,
-    CONFIG.smoothing
-  );
-
-  bodySmooth = ema(
-    bodySmooth,
-    bodyRaw,
-    CONFIG.smoothing
-  );
-
-  elbowValueEl.textContent =
-    Math.round(elbowSmooth) + "°";
-
-  bodyValueEl.textContent =
-    Math.round(bodySmooth) + "°";
-
-  setDebug(
-    "Lato: " +
-    sideName +
-    " • Gomito: " +
-    Math.round(elbowSmooth) +
-    "° • Corpo: " +
-    Math.round(bodySmooth) +
-    "°"
-  );
-
-
-  /* ---------- FSM ---------- */
-
-  updatePushupFSM(
-    elbowSmooth,
-    bodySmooth
-  );
-}
-
-
-/* =========================================================
-   PUSH-UP STATE MACHINE
-
-   READY
-     ↓
-   UP
-     ↓
-   DOWN
-     ↓
-   BOTTOM
-     ↓
-   ASCENT
-     ↓
-   UP = REP
-========================================================= */
-
-function updatePushupFSM(
-  elbowAngle,
-  bodyAngle
-) {
-
-  const now = performance.now();
-
-
-  /* READY -> UP */
-
-  if (state === "READY" ||
-      state === "NO BODY" ||
-      state === "TRACKING") {
-
-    if (elbowAngle >= CONFIG.upAngle) {
-
-      setState("UP");
-
-      setFeedback(
-        "Posizione iniziale rilevata. Puoi iniziare.",
-        "good"
-      );
-    }
-
+  if(state==="DESCENT"){
+    minElbow=Math.min(minElbow,elbow);ui.depth.textContent=Math.round(minElbow)+"°";
+    if(elbow<C.DOWN){downFrames++}else{downFrames=0}
+    if(downFrames>=C.DOWN_FRAMES){fullDepth=true;bottomAt=now;setState("BOTTOM");feedback("Profondità raggiunta. Risali!","good");return}
+    // Turned around early: still allow ascent, but it will not count.
+    if(elbow>minElbow+15){bottomAt=now;setState("ASCENT");feedback("Stai risalendo: per contare devi scendere sotto ~95°.","warn")}
     return;
   }
-
-
-  /* UP -> DOWN */
-
-  if (state === "UP") {
-
-    if (elbowAngle < CONFIG.upAngle - 12) {
-
-      setState("DOWN");
-
-      repStartTime = now;
-
-      bottomReached = false;
-
-      minimumElbowThisRep =
-        elbowAngle;
-
-      setFeedback(
-        "Discesa...",
-        ""
-      );
-    }
-
+  if(state==="BOTTOM"){
+    minElbow=Math.min(minElbow,elbow);ui.depth.textContent=Math.round(minElbow)+"°";
+    if(elbow>minElbow+10){setState("ASCENT");feedback("Salita…","")}
     return;
   }
-
-
-  /* DOWN */
-
-  if (state === "DOWN") {
-
-    minimumElbowThisRep =
-      Math.min(
-        minimumElbowThisRep,
-        elbowAngle
-      );
-
-    if (
-      elbowAngle <= CONFIG.bottomAngle
-    ) {
-
-      bottomReached = true;
-
-      setState("BOTTOM");
-
-      setFeedback(
-        "Profondità raggiunta.",
-        "good"
-      );
-
-      return;
-    }
-
-
-    /*
-      È tornato su senza arrivare
-      abbastanza in basso.
-    */
-
-    if (
-      elbowAngle >= CONFIG.upAngle
-    ) {
-
-      setState("UP");
-
-      repStartTime = null;
-
-      setFeedback(
-        "Rep non contata: scendi di più.",
-        "warn"
-      );
-    }
-
-    return;
-  }
-
-
-  /* BOTTOM */
-
-  if (state === "BOTTOM") {
-
-    minimumElbowThisRep =
-      Math.min(
-        minimumElbowThisRep,
-        elbowAngle
-      );
-
-    if (
-      elbowAngle >
-      CONFIG.bottomAngle + 10
-    ) {
-
-      setState("ASCENT");
-
-      setFeedback(
-        "Sali...",
-        ""
-      );
-    }
-
-    return;
-  }
-
-
-  /* ASCENT */
-
-  if (state === "ASCENT") {
-
-    if (
-      elbowAngle <= CONFIG.bottomAngle
-    ) {
-
-      setState("BOTTOM");
-
-      return;
-    }
-
-
-    if (
-      elbowAngle >= CONFIG.upAngle
-    ) {
-
-      const duration =
-        repStartTime !== null
-          ? now - repStartTime
-          : 0;
-
-
-      const validTime =
-        duration >= CONFIG.minRepMs &&
-        duration <= CONFIG.maxRepMs;
-
-
-      if (
-        bottomReached &&
-        validTime
-      ) {
-
-        reps++;
-
-        repsEl.textContent = reps;
-
-        tempoValueEl.textContent =
-          (duration / 1000).toFixed(1) +
-          "s";
-
-        evaluateCompletedRep(
-          minimumElbowThisRep,
-          bodyAngle,
-          duration
-        );
-
-      } else {
-
-        setFeedback(
-          "Movimento non valido. Riprova.",
-          "warn"
-        );
+  if(state==="ASCENT"){
+    if(elbow>C.UP){upFrames++}else{upFrames=0}
+    if(upFrames>=C.UP_FRAMES){
+      const dur=now-repStart;
+      if(fullDepth && dur>=C.MIN_REP_MS && dur<=C.MAX_REP_MS){
+        reps++;ui.reps.textContent=reps;ui.tempo.textContent=(dur/1000).toFixed(1)+"s";
+        feedback(body<C.GOOD_BODY?`Rep ${reps} ✓ — prova a mantenere il corpo più allineato.`:`Rep ${reps} ✓` ,body<C.GOOD_BODY?"warn":"good");
+      }else{
+        feedback(fullDepth?"Movimento troppo breve/lungo: rep non contata.":"Rep non contata: profondità insufficiente.","warn");
       }
-
-
-      repStartTime = null;
-
-      bottomReached = false;
-
-      minimumElbowThisRep = 180;
-
-      setState("UP");
+      setState("READY");repStart=0;bottomAt=0;minElbow=180;fullDepth=false;downFrames=0;upFrames=0;ui.depth.textContent="--°";
     }
   }
 }
-
-
-/* =========================================================
-   VALUTAZIONE REP
-========================================================= */
-
-function evaluateCompletedRep(
-  minElbow,
-  bodyAngle,
-  duration
-) {
-
-  if (
-    bodyAngle <
-    CONFIG.goodBodyAngle
-  ) {
-
-    setFeedback(
-      "✓ Rep " +
-      reps +
-      " — prova a mantenere il corpo più allineato.",
-      "warn"
-    );
-
-    return;
+function updateFPS(){frames++;const n=performance.now(),d=n-fpsT;if(d>=1000){ui.fps.textContent=Math.round(frames*1000/d)+" FPS";frames=0;fpsT=n}}
+function loop(){
+  if(!running)return;
+  if(video.readyState>=2 && video.currentTime!==lastVideo){
+    lastVideo=video.currentTime;
+    try{const r=pose.detectForVideo(video,performance.now());draw(r);analyze(r);updateFPS()}catch(e){console.error(e);debug("TRACKING ERROR: "+e.message)}
   }
-
-
-  if (duration < 900) {
-
-    setFeedback(
-      "✓ Rep " +
-      reps +
-      " — movimento molto veloce.",
-      "warn"
-    );
-
-    return;
-  }
-
-
-  if (duration > 5000) {
-
-    setFeedback(
-      "✓ Rep " +
-      reps +
-      " — movimento molto lento.",
-      "warn"
-    );
-
-    return;
-  }
-
-
-  setFeedback(
-    "✓ Rep " +
-    reps +
-    " completata bene.",
-    "good"
-  );
+  requestAnimationFrame(loop);
 }
-
-
-/* =========================================================
-   VISIBILITÀ
-========================================================= */
-
-function visibilityScore(side) {
-
-  return (
-    getVisibility(side.shoulder) +
-    getVisibility(side.elbow) +
-    getVisibility(side.wrist) +
-    getVisibility(side.hip) +
-    getVisibility(side.ankle)
-  );
-}
-
-
-function sideVisible(side) {
-
-  return (
-    getVisibility(side.shoulder) >= CONFIG.visibility &&
-    getVisibility(side.elbow) >= CONFIG.visibility &&
-    getVisibility(side.wrist) >= CONFIG.visibility &&
-    getVisibility(side.hip) >= CONFIG.visibility &&
-    getVisibility(side.ankle) >= CONFIG.visibility
-  );
-}
-
-
-function getVisibility(point) {
-
-  if (
-    point.visibility === undefined ||
-    point.visibility === null
-  ) {
-    return 1;
-  }
-
-  return point.visibility;
-}
-
-
-/* =========================================================
-   MATEMATICA
-========================================================= */
-
-function angle(a, b, c) {
-
-  const abx = a.x - b.x;
-  const aby = a.y - b.y;
-  const abz = (a.z || 0) - (b.z || 0);
-
-  const cbx = c.x - b.x;
-  const cby = c.y - b.y;
-  const cbz = (c.z || 0) - (b.z || 0);
-
-  const dot =
-    abx * cbx +
-    aby * cby +
-    abz * cbz;
-
-  const magAB = Math.sqrt(
-    abx * abx +
-    aby * aby +
-    abz * abz
-  );
-
-  const magCB = Math.sqrt(
-    cbx * cbx +
-    cby * cby +
-    cbz * cbz
-  );
-
-  if (
-    magAB === 0 ||
-    magCB === 0
-  ) {
-    return 180;
-  }
-
-  let cosine =
-    dot / (magAB * magCB);
-
-  cosine = Math.max(
-    -1,
-    Math.min(1, cosine)
-  );
-
-  return (
-    Math.acos(cosine) *
-    180 /
-    Math.PI
-  );
-}
-
-
-function ema(
-  previous,
-  current,
-  smoothing
-) {
-
-  if (
-    previous === null ||
-    !Number.isFinite(previous)
-  ) {
-    return current;
-  }
-
-  return (
-    previous * smoothing +
-    current * (1 - smoothing)
-  );
-}
-
-
-/* =========================================================
-   FPS
-========================================================= */
-
-function updateFPS() {
-
-  frames++;
-
-  const now =
-    performance.now();
-
-  const elapsed =
-    now - fpsTimestamp;
-
-  if (elapsed >= 1000) {
-
-    const currentFPS =
-      Math.round(
-        frames * 1000 / elapsed
-      );
-
-    fpsEl.textContent =
-      currentFPS + " FPS";
-
-    frames = 0;
-    fpsTimestamp = now;
-  }
-}
-
-
-/* =========================================================
-   RESET
-========================================================= */
-
-function resetWorkout() {
-
-  reps = 0;
-
-  repsEl.textContent = "0";
-
-  tempoValueEl.textContent = "--";
-
-  elbowValueEl.textContent = "--°";
-
-  bodyValueEl.textContent = "--°";
-
-  elbowSmooth = null;
-  bodySmooth = null;
-
-  repStartTime = null;
-
-  bottomReached = false;
-
-  minimumElbowThisRep = 180;
-
-  setState("READY");
-
-  setFeedback(
-    "Serie azzerata. Assumi la posizione alta del push-up.",
-    ""
-  );
-}
-
-
-/* =========================================================
-   EVENTI
-========================================================= */
-
-startBtn.addEventListener(
-  "click",
-  startCamera
-);
-
-cameraBtn.addEventListener(
-  "click",
-  switchCamera
-);
-
-resetBtn.addEventListener(
-  "click",
-  resetWorkout
-);
-
-
-/* =========================================================
-   CHECK INIZIALE
-========================================================= */
-
-if (!window.isSecureContext) {
-
-  setStatus(
-    "HTTPS richiesto",
-    "error"
-  );
-
-  setFeedback(
-    "La fotocamera richiede HTTPS.",
-    "bad"
-  );
-
-} else {
-
-  setStatus("Pronto");
-
-}
-
+function resetAll(){reps=0;ui.reps.textContent="0";ui.tempo.textContent="--";ui.depth.textContent="--°";smoothElbow=null;smoothBody=null;downFrames=upFrames=readyFrames=0;repStart=0;minElbow=180;fullDepth=false;setState("GET_READY");feedback("Reset. Mettiti in plank con braccia distese.","")}
+$("start").addEventListener("click",startCamera);
+$("switch").addEventListener("click",async()=>{facing=facing==="environment"?"user":"environment";if(running){running=false;stopStream();await startCamera()}});
+$("reset").addEventListener("click",resetAll);
+if(!window.isSecureContext){status("HTTPS richiesto","err");feedback("Apri l'app tramite HTTPS.","bad")}
 </script>
-
-</body>
-</html>
+</body></html>
