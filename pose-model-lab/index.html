@@ -1,63 +1,598 @@
-<!doctype html>
-<html lang="it">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>MediaPipe Pose Model Lab · Lite Full Heavy</title>
-<style>
-body{margin:0;background:#07111f;color:#eef6ff;font:15px system-ui;padding:14px}h1{font-size:21px}
-.controls,.card{background:#0d1b2c;border:1px solid #29425e;border-radius:14px;padding:12px;margin-bottom:12px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stage{position:relative;aspect-ratio:4/3;background:#02070c;border-radius:10px;overflow:hidden}
-video,canvas{position:absolute;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}canvas{z-index:2}
-button{padding:12px 18px;border:0;border-radius:10px;font-weight:800;font-size:16px}.stats{line-height:1.55;font-variant-numeric:tabular-nums}
-.ok{color:#62e6a7}.warn{color:#ffd166}.bad{color:#ff7474}.title{font-size:18px;font-weight:800;margin-bottom:8px}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
-</style></head>
-<body>
-<h1>🧪 MediaPipe Pose Model Lab · Lite vs Full vs Heavy</h1>
-<div class="controls"><button id="go">AVVIA CONFRONTO</button> <span id="status">Pronto.</span>
-<p>Test: curl alternato frontale → simultaneo → 45° → laterale. Guarda soprattutto stabilità SX/DX, jitter, World 3D e FPS.</p></div>
-<div class="grid">
-<div class="card"><div class="title">LITE</div><div class="stage"><video id="v1" autoplay muted playsinline></video><canvas id="c1"></canvas></div><div id="s1" class="stats">—</div></div>
-<div class="card"><div class="title">FULL</div><div class="stage"><video id="v2" autoplay muted playsinline></video><canvas id="c2"></canvas></div><div id="s2" class="stats">—</div></div>
-<div class="card"><div class="title">HEAVY</div><div class="stage"><video id="v3" autoplay muted playsinline></video><canvas id="c3"></canvas></div><div id="s3" class="stats">—</div></div>
-</div>
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0d10"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>AI Gym Coach V9H Heavy 3D Biomechanical Body Model</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:850px;margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:20px;margin:4px 0}.pill{padding:7px 10px;border-radius:999px;background:#1a2028;font-size:12px}.stage{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#111;aspect-ratio:3/4;max-height:70vh}.stage video,.stage canvas{position:absolute;width:100%;height:100%;object-fit:cover}.mirror{transform:scaleX(-1)}.rep{position:absolute;top:12px;left:12px;background:#000b;border-radius:16px;padding:8px 14px;font-size:42px;font-weight:900}.phase{position:absolute;top:14px;right:12px;background:#000b;padding:8px 12px;border-radius:999px;font-weight:800}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.label{font-size:10px;color:#8e99a8}.value{font-size:21px;font-weight:850;margin-top:3px}.feedback{margin-top:10px;background:#151a21;border-radius:14px;padding:14px;font-weight:800;min-height:50px}.good{color:#65e59a}.warn{color:#ffd166}.bad{color:#ff7b7b}.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:8px;margin-top:10px}button{border:0;border-radius:14px;padding:14px 10px;font-weight:900;font-size:14px;background:#f4f7fb;color:#0b0d10}button.secondary{background:#222a34;color:#fff}.exerciseBar{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.exerciseBar label{font-size:11px;color:#8e99a8;font-weight:800}.exerciseBar select{width:100%;background:#222a34;color:#fff;border:0;border-radius:12px;padding:12px;font-size:15px;font-weight:800}.voiceDebug{margin-top:10px;background:#10151b;border:1px solid #303946;border-radius:14px;padding:12px}.voiceDebug h2{font-size:13px;margin:0 0 8px}.voiceLine{font:12px ui-monospace,monospace;margin:4px 0}.voiceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.debug{font:11px ui-monospace,monospace;color:#7f8b9a;margin-top:8px;word-break:break-all}.recap{display:none;margin-top:12px;background:#151a21;border:1px solid #303947;border-radius:16px;padding:14px}
+.recap.show{display:block}.recap h2{margin:0 0 10px;font-size:16px}.recapTop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.recapBox{background:#10151b;border-radius:11px;padding:10px;text-align:center}.recapBox b{display:block;font-size:20px}.recapBox span{font-size:9px;color:#8e99a8}
+.recapSummary{margin:12px 0;padding:10px;background:#10151b;border-radius:11px;font-size:12px;line-height:1.45}
+.repTable{width:100%;border-collapse:collapse;font-size:10px}.repTable th,.repTable td{padding:6px 3px;border-bottom:1px solid #252c36;text-align:center}.repTable th{color:#8e99a8}
+.diag{margin-top:10px;background:#151a21;border:1px solid #252c36;border-radius:14px;padding:10px}.diag h2{font-size:12px;margin:0 0 8px;color:#aeb8c5}.diagGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.diagItem{background:#10151b;border-radius:10px;padding:8px}.diagItem .dlabel{font-size:9px;color:#8e99a8}.diagItem .dval{font-size:15px;font-weight:850;margin-top:2px}@media(min-width:700px){.stage{aspect-ratio:4/3}.app{padding:20px}} </style></head><body><main class="app"><div class="top"><h1>🏋️ AI Gym Coach V9H · Heavy 3D Biomechanical Body Model</h1><div class="pill" id="status">CARICAMENTO AI…</div></div><div class="exerciseBar"><label for="exercise">ESERCIZIO</label><select id="exercise"><option value="curl">Bicep Curl</option><option value="squat">Squat</option></select></div><div class="stage"><video id="video" playsinline muted></video><canvas id="canvas"></canvas><div class="rep" id="reps">0</div><div class="phase" id="phase">GET READY</div></div><div class="grid"><div class="card"><div class="label" id="metricLabel">GOMITO</div><div class="value" id="elbow">--°</div></div><div class="card"><div class="label" id="sideLabel">BRACCIO</div><div class="value" id="side">--</div></div><div class="card"><div class="label">TEMPO REP</div><div class="value" id="tempo">--</div></div></div><div class="feedback" id="feedback">Seleziona l’esercizio. Per Curl Advanced inquadra busto, braccio e mano: Pose + 21 landmark della mano. Per lo squat usa una vista laterale con il corpo intero.</div><div class="diag"><h2>UNIVERSAL BODY TRACKER</h2><div class="diagGrid">
+<div class="diagItem"><div class="dlabel">POSE</div><div class="dval" id="trkPose">33 punti</div></div>
+<div class="diagItem"><div class="dlabel">MANI</div><div class="dval" id="trkHands">--</div></div>
+<div class="diagItem"><div class="dlabel">PROFILO</div><div class="dval" id="trkProfile">--</div></div>
+<div class="diagItem"><div class="dlabel">MODELLO 3D</div><div class="dval" id="trk3d">--</div></div>
+<div class="diagItem"><div class="dlabel">VISTA</div><div class="dval" id="trkView">--</div></div>
+<div class="diagItem"><div class="dlabel">CONFIDENCE</div><div class="dval" id="trkConfidence">--</div></div>
+</div></div><div class="diag"><h2>CARICO / OBIETTIVO</h2><div class="diagGrid">
+<div class="diagItem"><div class="dlabel">PESO (kg)</div><input id="loadKg" type="number" min="0" step="0.5" value="10" style="width:100%;box-sizing:border-box;background:#0d1218;color:#fff;border:1px solid #303947;border-radius:7px;padding:6px"></div>
+<div class="diagItem"><div class="dlabel">TARGET REP</div><input id="targetReps" type="number" min="1" step="1" value="10" style="width:100%;box-sizing:border-box;background:#0d1218;color:#fff;border:1px solid #303947;border-radius:7px;padding:6px"></div>
+<div class="diagItem"><div class="dlabel">VELOCITÀ</div><div class="dval" id="dVelocity">--</div></div>
+</div></div><div class="diag" id="curlDiag"><h2>CURL ADVANCED · DIAGNOSTICA LIVE</h2><div class="diagGrid">
+<div class="diagItem"><div class="dlabel">BUSTO</div><div class="dval" id="dTorso">--</div></div>
+<div class="diagItem"><div class="dlabel">GOMITO DRIFT</div><div class="dval" id="dElbowDrift">--</div></div>
+<div class="diagItem"><div class="dlabel">SPALLA</div><div class="dval" id="dShoulder">--</div></div>
+<div class="diagItem"><div class="dlabel">MANO</div><div class="dval" id="dHand">--</div></div>
+<div class="diagItem"><div class="dlabel">POLSO · FLESS/EST</div><div class="dval" id="dWrist">--</div></div>
+<div class="diagItem"><div class="dlabel">ROTAZ. AVAMBRACCIO</div><div class="dval" id="dPalm">--</div></div>
+</div></div><div class="recap" id="sessionRecap"><h2>📊 Recap sessione</h2>
+<div class="recapTop"><div class="recapBox"><b id="rReps">0</b><span>RIPETIZIONI</span></div><div class="recapBox"><b id="rTime">0:00</b><span>DURATA</span></div><div class="recapBox"><b id="rClean">0/0</b><span>REP SENZA ALERT</span></div></div>
+<div class="recapSummary" id="rSummary">Premi FINE SESSIONE per creare il recap.</div>
+<div class="recapSummary" id="rVelocity">Velocità: nessun dato.</div>
+<div class="recapSummary" id="rCoach"><b>COACH:</b> il commento apparirà a fine sessione.</div>
+<div style="overflow:auto"><table class="repTable"><thead><tr><th>REP</th><th>ROM</th><th>↑ SALITA</th><th>↓ DISCESA</th><th>VEL. REL.</th><th>BUSTO</th><th>GOMITO</th><th>SPALLA</th><th>POLSO</th><th>ROT.</th><th>MANO</th></tr></thead><tbody id="rRows"></tbody></table></div></div>
+<div class="controls"><button id="finishSession">FINE SESSIONE</button></div><div class="controls"><button id="start">AVVIA</button><button class="secondary" id="voice">🔊 VOCE</button><button class="secondary" id="switch">CAMERA</button><button class="secondary" id="reset">RESET</button></div><div class="voiceDebug"><h2>VOICE DEBUG · PAOLA / PIPER</h2><div class="voiceLine" id="vdScript">Piper worker: …</div><div class="voiceLine" id="vdConfig">Paola config: …</div><div class="voiceLine" id="vdVoice">Paola ONNX: …</div><div class="voiceLine" id="vdAudio">AudioContext: …</div><div class="voiceLine" id="vdPlay">Ultimo test: —</div><div class="voiceActions"><button class="secondary" id="testBeep">TEST AUDIO</button><button id="testVoice">TEST VOCE</button></div></div><div class="debug" id="debug"></div></main>
 <script type="module">
-import {FilesetResolver,PoseLandmarker,DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm";
-const $=x=>document.getElementById(x);
-const vids=[$("v1"),$("v2"),$("v3")], cvs=[$("c1"),$("c2"),$("c3")], sts=[$("s1"),$("s2"),$("s3")];
-const urls=[
-"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
-"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task"];
-let models=[],running=false,idx=0,last=0,counts=[0,0,0],ticks=[performance.now(),performance.now(),performance.now()],fps=[0,0,0],prev=[null,null,null],jitter=[0,0,0];
-function angle(a,b,c){let u=[a.x-b.x,a.y-b.y,a.z-b.z],v=[c.x-b.x,c.y-b.y,c.z-b.z],d=Math.hypot(...u)*Math.hypot(...v);return d?Math.acos(Math.max(-1,Math.min(1,(u[0]*v[0]+u[1]*v[1]+u[2]*v[2])/d)))*180/Math.PI:NaN}
-function run(i,t){
- let r=models[i].detectForVideo(vids[i],t), lm=r.landmarks?.[0], w=r.worldLandmarks?.[0], ctx=cvs[i].getContext("2d");
- cvs[i].width=vids[i].videoWidth;cvs[i].height=vids[i].videoHeight;ctx.clearRect(0,0,cvs[i].width,cvs[i].height);
- if(!lm){sts[i].innerHTML='<span class=bad>Nessuna posa</span>';return}
- let du=new DrawingUtils(ctx);du.drawConnectors(lm,PoseLandmarker.POSE_CONNECTIONS,{color:"#4de3ff",lineWidth:4});du.drawLandmarks(lm,{color:"#62e6a7",radius:3});
- let src=w||lm,L=angle(src[11],src[13],src[15]),R=angle(src[12],src[14],src[16]);
- if(prev[i]){let d=Math.hypot(lm[13].x-prev[i][0],lm[13].y-prev[i][1])+Math.hypot(lm[14].x-prev[i][2],lm[14].y-prev[i][3]);jitter[i]=jitter[i]*.9+d*.1}
- prev[i]=[lm[13].x,lm[13].y,lm[14].x,lm[14].y];counts[i]++;let now=performance.now();
- if(now-ticks[i]>1000){fps[i]=counts[i]*1000/(now-ticks[i]);counts[i]=0;ticks[i]=now}
- let vis=((lm[11].visibility+lm[12].visibility+lm[13].visibility+lm[14].visibility+lm[15].visibility+lm[16].visibility)/6)*100;
- sts[i].innerHTML=`FPS modello: <b>${fps[i].toFixed(1)}</b><br>WORLD 3D: <b>${w?"SÌ ✓":"NO"}</b><br>Gomito SX: <b>${L.toFixed(1)}°</b> · DX: <b>${R.toFixed(1)}°</b><br>Visibility braccia: <b>${vis.toFixed(0)}%</b><br>Jitter grezzo: <b>${jitter[i].toFixed(4)}</b>`;
-}
-function loop(t){if(!running)return;
- // round-robin: un'inferenza per animation frame per non triplicare il carico nello stesso frame
- run(idx,t);idx=(idx+1)%3;requestAnimationFrame(loop)}
-$("go").onclick=async()=>{
- try{$("go").disabled=true;$("status").textContent="Camera…";
- let stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:960},height:{ideal:1280}},audio:false});
- for(let v of vids){v.srcObject=stream;await v.play()}
- $("status").textContent="Carico MediaPipe e i 3 modelli…";
- let fs=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm");
- for(let i=0;i<3;i++){ $("status").textContent=`Carico ${["Lite","Full","Heavy"][i]}…`;
-   let m;try{m=await PoseLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:urls[i],delegate:"GPU"},runningMode:"VIDEO",numPoses:1})}
-   catch(e){m=await PoseLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:urls[i],delegate:"CPU"},runningMode:"VIDEO",numPoses:1})}
-   models.push(m);
+import {PoseLandmarker,HandLandmarker,FilesetResolver,DrawingUtils} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/+esm";
+import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/+esm";
+const $=id=>document.getElementById(id), video=$("video"),canvas=$("canvas"),ctx=canvas.getContext("2d");
+const ui={status:$("status"),reps:$("reps"),phase:$("phase"),elbow:$("elbow"),side:$("side"),tempo:$("tempo"),feedback:$("feedback"),debug:$("debug"),vdScript:$("vdScript"),vdConfig:$("vdConfig"),vdVoice:$("vdVoice"),vdAudio:$("vdAudio"),vdPlay:$("vdPlay"),metricLabel:$("metricLabel"),sideLabel:$("sideLabel"),exercise:$("exercise"),dTorso:$("dTorso"),dElbowDrift:$("dElbowDrift"),dShoulder:$("dShoulder"),dHand:$("dHand"),dWrist:$("dWrist"),dPalm:$("dPalm"),curlDiag:$("curlDiag"),sessionRecap:$("sessionRecap"),rReps:$("rReps"),rTime:$("rTime"),rClean:$("rClean"),rSummary:$("rSummary"), rRows:$("rRows"),rVelocity:$("rVelocity"),loadKg:$("loadKg"),targetReps:$("targetReps"),dVelocity:$("dVelocity"),trkPose:$("trkPose"),trkHands:$("trkHands"),trkProfile:$("trkProfile"),trk3d:$("trk3d"),trkView:$("trkView"),trkConfidence:$("trkConfidence"),rCoach:$("rCoach")};
+const CFG={VIS:.48,EMA:.48,EXTENDED:150,START_CURL:138,TOP:62,TOP_FRAMES:2,EXT_FRAMES:2,MIN_REP:600,MAX_REP:7000,ELBOW_DRIFT:.13,SHOULDER_SWING:.10};
+const SQUAT={VIS:.45,EMA:.50,STAND:155,START:145,BOTTOM:105,BOTTOM_FRAMES:2,STAND_FRAMES:3,MIN_REP:700,MAX_REP:9000,TORSO_WARN:42};
+// V6: exercise definitions are data. The runtime dispatches by engine/family.
+const EXERCISE_PROFILES={
+ curl:{
+  id:"curl",name:"Bicep Curl",family:"angle_cycle",engine:"curl",
+  view:"side_or_45",metric:"GOMITO",sideLabel:"BRACCIO",trackers:["pose","hands"],
+  landmarks:["shoulder","elbow","wrist","hip"],
+  phases:["GET_READY","READY","CURL_UP","TOP","LOWER"],
+  thresholds:{extended:CFG.EXTENDED,start:CFG.START_CURL,top:CFG.TOP},
+  validators:["upper_arm_not_overhead","elbow_near_torso"],
+  errors:["elbow_swing","shoulder_compensation"]
+ },
+ squat:{
+  id:"squat",name:"Squat",family:"angle_cycle",engine:"squat",
+  view:"side",metric:"GINOCCHIO",sideLabel:"GAMBA",trackers:["pose"],
+  landmarks:["shoulder","hip","knee","ankle"],
+  phases:["GET_READY","READY","DESCENT","BOTTOM","ASCENT"],
+  thresholds:{stand:SQUAT.STAND,start:SQUAT.START,bottom:SQUAT.BOTTOM},
+  validators:["real_hip_descent"],
+  errors:["torso_instability"]
  }
- $("status").innerHTML='<span class=ok>TUTTI I MODELLI PRONTI ✓</span>';running=true;requestAnimationFrame(loop);
- }catch(e){$("status").innerHTML='<span class=bad>'+e.message+'</span>';$("go").disabled=false}
 };
+
+const V3={
+ sub:(a,b)=>({x:a.x-b.x,y:a.y-b.y,z:(a.z||0)-(b.z||0)}),
+ dot:(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z,
+ mag:a=>Math.hypot(a.x,a.y,a.z),
+ angle(a,b){const d=this.mag(a)*this.mag(b);if(!d)return NaN;return Math.acos(Math.max(-1,Math.min(1,this.dot(a,b)/d)))*180/Math.PI},
+ dist:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,(a.z||0)-(b.z||0))
+};
+const POSE={
+ nose:0,lShoulder:11,rShoulder:12,lElbow:13,rElbow:14,lWrist:15,rWrist:16,
+ lPinky:17,rPinky:18,lIndex:19,rIndex:20,lThumb:21,rThumb:22,
+ lHip:23,rHip:24,lKnee:25,rKnee:26,lAnkle:27,rAnkle:28,lHeel:29,rHeel:30,lFoot:31,rFoot:32
+};
+const BodyTracker={
+ frame:null,
+ update(poseResult,handResult){
+   const pose=poseResult?.landmarks?.[0]||null;
+   const world=poseResult?.worldLandmarks?.[0]||null;
+   const hands=handResult?.landmarks||[];
+   const handWorld=handResult?.worldLandmarks||[];
+   const features=pose?this.computePoseFeatures(pose,world):{};
+   const view=pose?this.detectView(pose,world):{name:"--",confidence:0};
+   this.frame={time:performance.now(),pose,world,hands,handWorld,features,view};
+   ui.trkPose.textContent=pose?"33 punti ✓":"ricerca…";
+   ui.trkHands.textContent=hands.length?`${hands.length} × 21 ✓`:(this.needsHands()?"ricerca…":"OFF");
+   ui.trkProfile.textContent=activeExercise.toUpperCase();
+   ui.trk3d.textContent=world?"WORLD ✓":"2D fallback";
+   ui.trkView.textContent=view.name;
+   ui.trkConfidence.textContent=Math.round(view.confidence*100)+"%";
+   return this.frame;
+ },
+ needsHands(){return ExerciseEngine.current?.trackers?.includes("hands")??false},
+ angle3(lm,a,b,c){return V3.angle(V3.sub(lm[a],lm[b]),V3.sub(lm[c],lm[b]))},
+ computePoseFeatures(p,w){
+   const f={}; const A=(a,b,c)=>angle2D(p[a],p[b],p[c]);
+   f.leftElbow=A(11,13,15);f.rightElbow=A(12,14,16);
+   f.leftShoulder=A(13,11,23);f.rightShoulder=A(14,12,24);
+   f.leftHip=A(11,23,25);f.rightHip=A(12,24,26);
+   f.leftKnee=A(23,25,27);f.rightKnee=A(24,26,28);
+   f.leftAnkle=A(25,27,31);f.rightAnkle=A(26,28,32);
+   f.shoulderWidth=Math.hypot(p[11].x-p[12].x,p[11].y-p[12].y);
+   f.handDistance=Math.hypot(p[15].x-p[16].x,p[15].y-p[16].y);
+   f.handShoulderRatio=f.shoulderWidth?f.handDistance/f.shoulderWidth:NaN;
+   f.shoulderTilt=Math.atan2(p[12].y-p[11].y,p[12].x-p[11].x)*180/Math.PI;
+   f.hipTilt=Math.atan2(p[24].y-p[23].y,p[24].x-p[23].x)*180/Math.PI;
+   f.torsoLean=Math.abs(Math.atan2(((p[11].x+p[12].x)/2)-((p[23].x+p[24].x)/2),
+                                  ((p[23].y+p[24].y)/2)-((p[11].y+p[12].y)/2))*180/Math.PI);
+   if(w){
+     f.leftElbow3D=this.angle3(w,11,13,15); f.rightElbow3D=this.angle3(w,12,14,16);
+     f.leftShoulder3D=this.angle3(w,13,11,23); f.rightShoulder3D=this.angle3(w,14,12,24);
+     f.leftHip3D=this.angle3(w,11,23,25); f.rightHip3D=this.angle3(w,12,24,26);
+     f.leftKnee3D=this.angle3(w,23,25,27); f.rightKnee3D=this.angle3(w,24,26,28);
+     f.leftAnkle3D=this.angle3(w,25,27,31); f.rightAnkle3D=this.angle3(w,26,28,32);
+     f.shoulderWidth3D=V3.dist(w[11],w[12]);
+     f.handDistance3D=V3.dist(w[15],w[16]);
+     f.handShoulderRatio3D=f.shoulderWidth3D?f.handDistance3D/f.shoulderWidth3D:NaN;
+     f.leftHumerusTorso3D=this.angle3(w,13,11,23);
+     f.rightHumerusTorso3D=this.angle3(w,14,12,24);
+   }
+   return f;
+ },
+ detectView(p,w){
+   // View-aware heuristic. It does not pretend to recover hidden anatomy:
+   // it estimates whether shoulder/hip geometry is frontal, oblique or side-like.
+   const sw=Math.abs(p[12].x-p[11].x), hw=Math.abs(p[24].x-p[23].x);
+   const torso=Math.max(.001,Math.hypot(((p[11].x+p[12].x)-(p[23].x+p[24].x))/2,
+                                      ((p[11].y+p[12].y)-(p[23].y+p[24].y))/2));
+   const ratio=((sw+hw)/2)/torso;
+   let name,conf;
+   if(ratio>.62){name="FRONTALE / POST.";conf=Math.min(.98,.65+(ratio-.62));}
+   else if(ratio>.28){name="3/4 · 30–60°";conf=.82;}
+   else{name="LATERALE";conf=Math.min(.96,.70+(.28-ratio));}
+   const vis=[11,12,23,24].map(i=>p[i]?.visibility??1).reduce((a,b)=>a+b,0)/4;
+   conf*=Math.max(.35,vis);
+   return {name,confidence:Math.max(0,Math.min(1,conf)),ratio};
+ },
+ closestHand(wrist){
+   if(!this.frame?.hands?.length)return null;
+   let best=null,bd=1e9;
+   for(const h of this.frame.hands){const d=Math.hypot(h[0].x-wrist.x,h[0].y-wrist.y);if(d<bd){bd=d;best=h}}
+   return bd<.20?best:null;
+ }
+};
+
+const MotionFeatures={
+ history:[],
+ push(frame){
+   if(!frame)return;
+   this.history.push(frame);
+   if(this.history.length>90)this.history.shift();
+ },
+ clear(){this.history=[]},
+ velocity(getter,windowMs=250){
+   if(this.history.length<2)return null;
+   const b=this.history[this.history.length-1],cut=b.time-windowMs;
+   let a=this.history[0];
+   for(let i=this.history.length-2;i>=0;i--){if(this.history[i].time<=cut){a=this.history[i];break}}
+   const va=getter(a),vb=getter(b),dt=(b.time-a.time)/1000;
+   return Number.isFinite(va)&&Number.isFinite(vb)&&dt>0?(vb-va)/dt:null;
+ }
+};
+
+const ExerciseEngine={
+ current:EXERCISE_PROFILES.curl,
+ select(id){
+  this.current=EXERCISE_PROFILES[id]||EXERCISE_PROFILES.curl;
+  activeExercise=this.current.id;
+  ui.metricLabel.textContent=this.current.metric;
+  ui.sideLabel.textContent=this.current.sideLabel;
+  ui.curlDiag.style.display=this.current.id==="curl"?"block":"none";
+  reset();
+  const p=this.current;
+  fb(`${p.name} selezionato. Vista consigliata: ${p.view==="side"?"laterale":"laterale o 45°"}.`,"good",false);
+ },
+ update(result){
+  if(!result.landmarks?.length){
+   trackingCoach(true);
+   fb(`Non ti vedo bene. Inquadra i landmark richiesti per ${this.current.name}.`,"warn",false);
+   return;
+  }
+  trackingCoach(false);
+  const lm=result.landmarks[0];
+  const fn=EXERCISE_HANDLERS[this.current.engine];
+  if(fn)fn(lm,this.current);
+ }
+};
+const VALIDATE={
+ CURL_MAX_UPPER_ARM_RAISE:58,     // upper arm should not point high overhead
+ CURL_MAX_ELBOW_ABOVE_SHOULDER:.025,
+ CURL_MAX_ELBOW_HIP_RATIO:.82,    // elbow should stay reasonably near torso/hip
+ CURL_BAD_HOLD_MS:500,
+ SQUAT_MAX_KNEE_TRAVEL_Y:.22
+};
+let invalidSince=0,invalidSpoken=false,squatReadyKneeY=null,squatReadyHipY=null;
+let lastHands=null,lastHandVideoTime=-1,lastHandRun=0;
+const HAND_INTERVAL_MS=90;
+let sessionStart=0,sessionReps=[],repTelemetry=null,phaseUpStart=0,phaseTopAt=0,phaseDownStart=0;
+function beginRepTelemetry(){
+ repTelemetry={samples:0,minElbow:Infinity,maxElbow:-Infinity,maxTorso:0,maxElbowDrift:0,maxShoulder:0,maxWristFlex:0,handSamples:0,rotationMin:Infinity,rotationMax:-Infinity,upMs:null,downMs:null};
+}
+function collectRepTelemetry(elbow,adv){
+ if(!repTelemetry)beginRepTelemetry(); const t=repTelemetry;
+ if(Number.isFinite(elbow)){t.samples++;t.minElbow=Math.min(t.minElbow,elbow);t.maxElbow=Math.max(t.maxElbow,elbow)}
+ t.maxTorso=Math.max(t.maxTorso,Number.isFinite(adv.torsoVertical)?adv.torsoVertical:0);
+ t.maxElbowDrift=Math.max(t.maxElbowDrift,Number.isFinite(adv.elbowDrift)?adv.elbowDrift:0);
+ t.maxShoulder=Math.max(t.maxShoulder,Number.isFinite(adv.shoulderMove)?adv.shoulderMove:0);
+ if(Number.isFinite(adv.wristFlex))t.maxWristFlex=Math.max(t.maxWristFlex,adv.wristFlex);
+ if(Number.isFinite(adv.forearmRotation)){t.handSamples++;t.rotationMin=Math.min(t.rotationMin,adv.forearmRotation);t.rotationMax=Math.max(t.rotationMax,adv.forearmRotation)}
+}
+function finishRepTelemetry(){
+ if(!repTelemetry||!repTelemetry.samples)return;
+ const t=repTelemetry,rom=(Number.isFinite(t.minElbow)&&Number.isFinite(t.maxElbow))?Math.max(0,t.maxElbow-t.minElbow):null;
+ sessionReps.push({n:reps,rom,upMs:t.upMs,downMs:t.downMs,torso:t.maxTorso,elbow:t.maxElbowDrift,shoulder:t.maxShoulder,wrist:t.maxWristFlex,hand:t.handSamples>0,rotationRange:t.handSamples?Math.max(0,t.rotationMax-t.rotationMin):null});
+ repTelemetry=null;
+}
+function fmtTime(ms){const sec=Math.max(0,Math.round(ms/1000)),m=Math.floor(sec/60),ss=String(sec%60).padStart(2,"0");return m+":"+ss}
+
+function italianList(items){
+ if(!items.length)return "";
+ if(items.length===1)return items[0];
+ return items.slice(0,-1).join(", ")+" e "+items[items.length-1];
+}
+function makeCoachSummary(data,counts,clean,load,target,loss){
+ const total=data.length;
+ if(!total)return "Non ho registrato ripetizioni complete in questa sessione.";
+ const corrected=total-clean;
+ const labels={torso:"stabilità del busto",elbow:"posizione del gomito",shoulder:"stabilità della spalla",wrist:"posizione del polso",hand:"visibilità della mano"};
+ const advice={
+   torso:"Cerca di mantenere il busto più stabile, evitando di aiutare la salita con l'oscillazione.",
+   elbow:"Tieni il gomito più stabile e vicino al fianco durante il movimento.",
+   shoulder:"Evita di sollevare o portare avanti la spalla per aiutare il curl.",
+   wrist:"Presta maggiore attenzione a mantenere il polso neutro e stabile.",
+   hand:"Prova a inquadrare meglio mano e polso per permettermi di controllare tutta la ripetizione."
+ };
+ const ranked=Object.entries(counts).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+ let parts=[`Hai completato ${total} ${total===1?"ripetizione":"ripetizioni"}.`];
+ if(clean===total)parts.push("Tutte le ripetizioni sono risultate senza alert tecnici con le soglie attuali.");
+ else if(clean>0)parts.push(`${clean} sono risultate senza alert tecnici e ${corrected} con almeno una correzione tecnica.`);
+ else parts.push("In tutte le ripetizioni ho rilevato almeno una correzione tecnica.");
+ if(ranked.length){
+   const [main,n]=ranked[0];
+   parts.push(`L'aspetto che ho rilevato più spesso riguarda ${labels[main]}, in ${n} ${n===1?"ripetizione":"ripetizioni"}.`);
+   parts.push(advice[main]);
+ }
+ if(target>0){
+   if(total>=target)parts.push(`Hai raggiunto il target di ${target} ripetizioni.`);
+   else parts.push(`Ti sei fermato a ${total} su un target di ${target} ripetizioni.`);
+ }
+ if(Number.isFinite(loss)&&loss>=35)parts.push("La fase di salita è rallentata nettamente verso la fine della serie.");
+ return parts.join(" ");
+}
+function buildSessionRecap(){
+ const data=sessionReps;ui.rReps.textContent=reps;ui.rTime.textContent=fmtTime(performance.now()-sessionStart);
+ const load=parseFloat(ui.loadKg.value)||0,target=parseInt(ui.targetReps.value)||0;
+ if(activeExercise!=="curl"){ui.rClean.textContent="—";ui.rSummary.textContent="Il recap tecnico avanzato è attualmente attivo sul Curl.";ui.rVelocity.textContent="";ui.rCoach.innerHTML="<b>COACH:</b> Recap tecnico vocale avanzato disponibile attualmente per Curl.";ui.rRows.innerHTML="";ui.sessionRecap.classList.add("show");return}
+ let counts={torso:0,elbow:0,shoulder:0,wrist:0,hand:0},clean=0;
+ for(const x of data){const f={torso:x.torso>18,elbow:x.elbow>.20,shoulder:x.shoulder>.14,wrist:x.wrist>32,hand:!x.hand};for(const k in f)if(f[k])counts[k]++;if(!Object.values(f).some(Boolean))clean++}
+ ui.rClean.textContent=clean+"/"+data.length;
+ const labels={torso:"busto",elbow:"gomito",shoulder:"spalla",wrist:"polso",hand:"mano non rilevata"},ranked=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+ ui.rSummary.textContent=!data.length?`Carico ${load} kg · target ${target} rep · nessuna ripetizione completa.`:`Carico ${load} kg · target ${target} rep. `+(ranked[0][1]?`Aspetto da rivedere più frequente: ${labels[ranked[0][0]]} (${ranked[0][1]}/${data.length} rep).`:"Nessun alert tecnico con le soglie attuali.");
+ const validUp=data.filter(x=>Number.isFinite(x.upMs)&&x.upMs>0);
+ const baseline=validUp.length?validUp.slice(0,Math.min(2,validUp.length)).reduce((a,x)=>a+x.upMs,0)/Math.min(2,validUp.length):null;
+ for(const x of data)x.rel=baseline&&x.upMs?Math.min(150,100*baseline/x.upMs):null;
+ const last=validUp.length?validUp[validUp.length-1]:null,loss=(baseline&&last?.upMs)?Math.max(0,100-(100*baseline/last.upMs)):null;
+ ui.rVelocity.textContent=loss==null?"Velocità: dati insufficienti.":`Velocity loss stimata: ${loss.toFixed(0)}%. Baseline = media delle prime ${Math.min(2,validUp.length)} rep. È una stima video relativa, non una misura VBT in m/s.`;
+ const coachText=makeCoachSummary(data,counts,clean,load,target,loss);
+ ui.rCoach.innerHTML="<b>COACH:</b> "+coachText;
+ VoiceManager.enqueue(coachText,{priority:3,key:"session-summary-"+Date.now(),cooldown:0,maxAge:30000});
+ ui.rRows.innerHTML=data.map(x=>`<tr><td>${x.n}</td><td>${x.rom==null?"--":Math.round(x.rom)+"°"}</td><td>${x.upMs? (x.upMs/1000).toFixed(2)+"s":"--"}</td><td>${x.downMs? (x.downMs/1000).toFixed(2)+"s":"--"}</td><td>${x.rel?Math.round(x.rel)+"%":"--"}</td><td>${x.torso>18?"⚠":"✓"} ${Math.round(x.torso)}°</td><td>${x.elbow>.20?"⚠":"✓"} ${x.elbow.toFixed(2)}</td><td>${x.shoulder>.14?"⚠":"✓"} ${x.shoulder.toFixed(2)}</td><td>${x.wrist>32?"⚠":"✓"} ${Math.round(x.wrist)}°</td><td>${x.rotationRange==null?"--":Math.round(x.rotationRange)+"°"}</td><td>${x.hand?"✓":"⚠"}</td></tr>`).join("");
+ ui.sessionRecap.classList.add("show");ui.sessionRecap.scrollIntoView({behavior:"smooth",block:"start"});
+}
+let pose,handLandmarker,drawer,stream,running=false,facing="environment",lastVideo=-1,smElbow=null,smKnee=null,reps=0,state="GET_READY",topFrames=0,extFrames=0,bottomFrames=0,standFrames=0,repStart=0,startElbowPos=null,startShoulderPos=null,lastFeedback="",activeExercise="curl";
+// Voice Engine: Paola / Piper, dinamico e gratuito. Pipeline verificata nel test standalone.
+let voiceEnabled=true, voiceReady=false, currentVoiceAudio=null, voiceInitPromise=null;
+const PAOLA_MODEL="https://huggingface.co/rhasspy/piper-voices/resolve/main/it/it_IT/paola/medium/it_IT-paola-medium.onnx";
+const PAOLA_CONFIG=PAOLA_MODEL+".json";
+let paolaCfg=null,paolaModelURL=null,paolaSession=null,phonemeWorker=null;
+
+ort.env.wasm.wasmPaths={
+ "ort-wasm-simd-threaded.jsep.mjs":"https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort-wasm-simd-threaded.jsep.mjs",
+ "ort-wasm-simd-threaded.jsep.wasm":"./voice-test/onnx/ort-wasm-simd-threaded.jsep.wasm",
+ "ort-wasm-simd-threaded.mjs":"https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort-wasm-simd-threaded.mjs",
+ "ort-wasm-simd-threaded.wasm":"./voice-test/onnx/ort-wasm-simd-threaded.wasm"
+};
+ort.env.wasm.numThreads=1;
+
+function vline(el,label,value,ok=null){el.textContent=label+": "+value;el.className="voiceLine "+(ok===true?"good":ok===false?"bad":"");}
+async function audioBeep(){
+ try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)throw new Error("AudioContext non supportato");const ac=new AC();await ac.resume();vline(ui.vdAudio,"AudioContext",ac.state,ac.state==="running");const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.frequency.value=660;g.gain.value=.08;o.start();o.stop(ac.currentTime+.18);o.onended=()=>ac.close();return true}catch(e){vline(ui.vdAudio,"AudioContext",e.message,false);return false}
+}
+function phonemize(text){
+ return new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>reject(new Error("timeout fonemizzatore")),30000);
+  const ok=e=>{clearTimeout(timer);phonemeWorker.removeEventListener("message",ok);phonemeWorker.removeEventListener("error",bad);resolve(e.data)};
+  const bad=e=>{clearTimeout(timer);phonemeWorker.removeEventListener("message",ok);phonemeWorker.removeEventListener("error",bad);reject(new Error(e.message||"errore worker"))};
+  phonemeWorker.addEventListener("message",ok);phonemeWorker.addEventListener("error",bad);
+  phonemeWorker.postMessage({type:"phonemize",data:[text,[paolaCfg,paolaModelURL]]});
+ });
+}
+function wavBlob(samples,sr){
+ const b=new ArrayBuffer(44+samples.length*2),v=new DataView(b);
+ const ws=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+ ws(0,"RIFF");v.setUint32(4,36+samples.length*2,true);ws(8,"WAVE");ws(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);ws(36,"data");v.setUint32(40,samples.length*2,true);
+ for(let i=0,o=44;i<samples.length;i++,o+=2){let s=Math.max(-1,Math.min(1,samples[i]));v.setInt16(o,s<0?s*32768:s*32767,true)}
+ return new Blob([b],{type:"audio/wav"});
+}
+async function initVoice(){
+ if(voiceInitPromise)return voiceInitPromise;
+ voiceInitPromise=(async()=>{
+  try{
+   vline(ui.vdScript,"Piper worker","avvio…");
+   phonemeWorker=new Worker("./voice-test/worker/PhonemizeWebWorker.js",{type:"module"});
+   phonemeWorker.postMessage({type:"constructor",data:{basePath:"../piper/"}});
+   vline(ui.vdScript,"Piper worker","OK",true);
+   vline(ui.vdConfig,"Paola config","caricamento…");
+   paolaCfg=await (await fetch(PAOLA_CONFIG)).json();
+   vline(ui.vdConfig,"Paola config","OK · "+paolaCfg.espeak.voice,true);
+   vline(ui.vdVoice,"Paola ONNX","scarico modello…");
+   const r=await fetch(PAOLA_MODEL);if(!r.ok)throw new Error("modello HTTP "+r.status);
+   const blob=await r.blob();
+   vline(ui.vdVoice,"Paola ONNX","modello "+(blob.size/1024/1024).toFixed(1)+" MB · inizializzo…");
+   paolaModelURL=URL.createObjectURL(blob);
+   paolaSession=await ort.InferenceSession.create(paolaModelURL,{executionProviders:["wasm"]});
+   voiceReady=true;
+   vline(ui.vdVoice,"Paola ONNX","PRONTA",true);
+   vline(ui.vdPlay,"Ultimo test","Paola pronta: premi TEST VOCE",true);
+  }catch(e){
+   voiceReady=false;vline(ui.vdVoice,"Paola ONNX","ERRORE: "+(e?.message||e),false);
+   vline(ui.vdPlay,"Ultimo test","errore voce: "+(e?.message||e),false);throw e;
+  }
+ })();
+ return voiceInitPromise;
+}
+async function paolaSpeak(text){
+ await initVoice();
+ const pd=await phonemize(text);
+ if(!pd?.phoneme_ids?.length)throw new Error("nessun fonema");
+ const ids=BigInt64Array.from(pd.phoneme_ids.map(BigInt));
+ const feeds={
+  input:new ort.Tensor("int64",ids,[1,ids.length]),
+  input_lengths:new ort.Tensor("int64",BigInt64Array.from([BigInt(ids.length)]),[1]),
+  scales:new ort.Tensor("float32",Float32Array.from([paolaCfg.inference.noise_scale,paolaCfg.inference.length_scale,paolaCfg.inference.noise_w]),[3])
+ };
+ if(Object.keys(paolaCfg.speaker_id_map||{}).length)feeds.sid=new ort.Tensor("int64",BigInt64Array.from([0n]),[1]);
+ const res=await paolaSession.run(feeds),blob=wavBlob(new Float32Array(res.output.data),paolaCfg.audio.sample_rate),url=URL.createObjectURL(blob);
+ await new Promise((resolve,reject)=>{
+  const a=new Audio(url);currentVoiceAudio=a;
+  a.onended=()=>{if(currentVoiceAudio===a)currentVoiceAudio=null;URL.revokeObjectURL(url);resolve()};
+  a.onerror=()=>{if(currentVoiceAudio===a)currentVoiceAudio=null;URL.revokeObjectURL(url);reject(new Error("riproduzione audio"))};
+  a.play().catch(reject);
+ });
+}
+const VoiceManager={
+ busy:false,queue:[],last:new Map(),seq:0,
+ enqueue(text,{priority=1,key=text,cooldown=4200,maxAge=3200}={}){
+  if(!voiceEnabled||!text)return;
+  const now=performance.now(),prev=this.last.get(key)||0;if(now-prev<cooldown)return;this.last.set(key,now);
+  const item={id:++this.seq,text,priority,key,created:now,maxAge};
+  if(priority>=10)this.queue=this.queue.filter(x=>x.priority>=10);else this.queue=this.queue.filter(x=>x.key!==key);
+  this.queue.push(item);this.queue.sort((a,b)=>b.priority-a.priority||a.created-b.created);this.pump();
+ },
+ async pump(){
+  if(this.busy||!voiceEnabled)return;
+  const now=performance.now();this.queue=this.queue.filter(x=>now-x.created<=x.maxAge);
+  const item=this.queue.shift();if(!item)return;
+  this.busy=true;vline(ui.vdPlay,"Ultimo test","Paola: "+item.text,true);
+  try{await paolaSpeak(item.text)}
+  catch(e){vline(ui.vdPlay,"Ultimo test","errore Paola: "+(e?.message||e),false)}
+  finally{this.busy=false;setTimeout(()=>this.pump(),120)}
+ },
+ reset(){this.queue=[];if(currentVoiceAudio){try{currentVoiceAudio.pause();currentVoiceAudio.currentTime=0}catch{}currentVoiceAudio=null}this.busy=false}
+};
+function speakText(text,{force=false,priority=1,key=null,cooldown=null,maxAge=null}={}){
+ VoiceManager.enqueue(text,{priority:force?Math.max(priority,10):priority,key:key||text,cooldown:cooldown??(force?500:4200),maxAge:maxAge??(force?12000:8000)});
+}
+function coach(text,css="",speak=true){
+  if(text===lastFeedback)return;
+  lastFeedback=text; ui.feedback.textContent=text; ui.feedback.className="feedback "+css;
+}
+initVoice().catch(()=>{});
+function status(t,c=""){ui.status.textContent=t;ui.status.className="pill "+c} function fb(t,c="",speak=true){coach(t,c,speak)} function setState(s){state=s;ui.phase.textContent=s.replace("_"," ")} function debug(t){ui.debug.textContent=t}
+const ErrorCoach={
+ active:new Map(),
+ update(key,isBad,text,{holdMs=900,clearMs=700}={}){
+  const now=performance.now();
+  let e=this.active.get(key)||{badSince:0,goodSince:0,spoken:false};
+  if(isBad){
+    e.goodSince=0;
+    if(!e.badSince)e.badSince=now;
+    if(!e.spoken && now-e.badSince>=holdMs){
+      speakText(text,{priority:6,key:"error:"+key,cooldown:0,maxAge:2200});
+      e.spoken=true;
+    }
+  }else{
+    e.badSince=0;
+    if(e.spoken){
+      if(!e.goodSince)e.goodSince=now;
+      if(now-e.goodSince>=clearMs)e={badSince:0,goodSince:0,spoken:false};
+    }else e.goodSince=0;
+  }
+  this.active.set(key,e);
+ },
+ clear(){this.active.clear()}
+};
+let trackingLostSince=0,trackingLostSpoken=false;
+function trackingCoach(lost){
+ const now=performance.now();
+ if(lost){
+   if(!trackingLostSince)trackingLostSince=now;
+   if(!trackingLostSpoken && now-trackingLostSince>2800){
+     speakText("Non riesco a vederti bene",{priority:5,key:"tracking-lost",cooldown:0,maxAge:1800});
+     trackingLostSpoken=true;
+   }
+ }else{
+   trackingLostSince=0;trackingLostSpoken=false;invalidSince=0;invalidSpoken=false;squatReadyKneeY=null;squatReadyHipY=null;
+ }
+}
+function angle2D(a,b,c){const ab=Math.atan2(a.y-b.y,a.x-b.x),cb=Math.atan2(c.y-b.y,c.x-b.x);let d=Math.abs((ab-cb)*180/Math.PI);return d>180?360-d:d} function ema(old,v,a){return old==null?v:old*a+v*(1-a)} function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function angleToVertical(a,b){
+ // 0 = segment a->b points upward, 90 = horizontal, 180 = downward
+ const dx=b.x-a.x,dy=b.y-a.y;
+ return Math.abs(Math.atan2(dx,-dy)*180/Math.PI);
+}
+function validateCurlPose(sh,el,wr,hip,stateNow){
+ const torso=Math.max(.08,dist(sh,hip));
+ const elbowHip=dist(el,hip)/torso;
+ const upperArmRaise=angleToVertical(sh,el);
+ const elbowAboveShoulder=el.y < sh.y-VALIDATE.CURL_MAX_ELBOW_ABOVE_SHOULDER;
+ // During a true curl the elbow can drift somewhat, but an overhead press
+ // raises the elbow/upper arm strongly away from the torso.
+ const overheadLike=elbowAboveShoulder || upperArmRaise<VALIDATE.CURL_MAX_UPPER_ARM_RAISE;
+ const detached=elbowHip>VALIDATE.CURL_MAX_ELBOW_HIP_RATIO;
+ const invalid=(stateNow!=="GET_READY") && (overheadLike || detached);
+ return {valid:!invalid,overheadLike,detached,upperArmRaise,elbowHip};
+}
+function invalidMovementCoach(isInvalid,text){
+ const now=performance.now();
+ if(isInvalid){
+   if(!invalidSince)invalidSince=now;
+   if(!invalidSpoken && now-invalidSince>=VALIDATE.CURL_BAD_HOLD_MS){
+     speakText(text,{priority:8,key:"wrong-exercise",cooldown:0,maxAge:2200});
+     invalidSpoken=true;
+   }
+ }else{
+   invalidSince=0;
+   invalidSpoken=false;
+ }
+}
+
+async function init(){try{
+ const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm");
+ const base={modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task",delegate:"GPU"};
+ try{pose=await PoseLandmarker.createFromOptions(vision,{baseOptions:base,runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.5,minPosePresenceConfidence:.5,minTrackingConfidence:.5})}
+ catch{base.delegate="CPU";pose=await PoseLandmarker.createFromOptions(vision,{baseOptions:base,runningMode:"VIDEO",numPoses:1})}
+ const hb={modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",delegate:"GPU"};
+ try{handLandmarker=await HandLandmarker.createFromOptions(vision,{baseOptions:hb,runningMode:"VIDEO",numHands:2,minHandDetectionConfidence:.45,minHandPresenceConfidence:.45,minTrackingConfidence:.45})}
+ catch{hb.delegate="CPU";handLandmarker=await HandLandmarker.createFromOptions(vision,{baseOptions:hb,runningMode:"VIDEO",numHands:2})}
+ drawer=new DrawingUtils(ctx);status("UNIVERSAL TRACKER PRONTO","good")
+}catch(e){status("ERRORE AI","bad");fb("Errore caricamento MediaPipe: "+e.message,"bad")}}
+function stopStream(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null} async function startCamera(){if(!pose){fb("Aspetta che l'AI sia pronta.","warn");return} stopStream();try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}},audio:false});video.srcObject=stream;await video.play();video.classList.toggle("mirror",facing==="user");canvas.classList.toggle("mirror",facing==="user");running=true;status("CAMERA ATTIVA","good");requestAnimationFrame(loop)}catch(e){status("CAMERA BLOCCATA","bad");fb("Non riesco ad aprire la camera: "+e.message,"bad")}}
+function chooseSide(lm){const score=s=>[11+s,13+s,15+s,23+s].reduce((n,i)=>n+(lm[i]?.visibility||0),0);return score(0)>=score(1)?{name:"SINISTRO",sh:11,el:13,wr:15,hip:23}:{name:"DESTRO",sh:12,el:14,wr:16,hip:24}}
+function draw(r,hands=lastHands){
+ canvas.width=video.videoWidth;canvas.height=video.videoHeight;ctx.clearRect(0,0,canvas.width,canvas.height);
+ if(r.landmarks?.length)for(const lm of r.landmarks){drawer.drawConnectors(lm,PoseLandmarker.POSE_CONNECTIONS,{color:"#75e6a4",lineWidth:3});drawer.drawLandmarks(lm,{color:"#fff",radius:2})}
+ if(ExerciseEngine.current?.trackers?.includes("hands")&&hands?.landmarks?.length)for(const hm of hands.landmarks){drawer.drawConnectors(hm,HandLandmarker.HAND_CONNECTIONS,{color:"#ffd166",lineWidth:2});drawer.drawLandmarks(hm,{color:"#ffcf5c",radius:2.5})}
+}
+function nearestHandToWrist(wr){return BodyTracker.closestHand(wr)}
+function angleDiff180(a,b){let d=Math.abs(a-b)%180;return d>90?180-d:d}
+function curlAdvancedMetrics(sh,el,wr,hip,hand,startElbow,startShoulder){
+ const torsoLen=Math.max(.08,dist(sh,hip));
+ const torsoVertical=Math.abs(Math.atan2(sh.x-hip.x,hip.y-sh.y)*180/Math.PI);
+ const elbowDrift=startElbow?dist(el,startElbow)/torsoLen:0;
+ const shoulderMove=startShoulder?dist(sh,startShoulder)/torsoLen:0;
+ let wristFlex=null,forearmRotation=null;
+ if(hand){
+   // Wrist flex/extension: compare forearm axis with the wrist→middle-MCP axis.
+   // Using the axis difference (rather than a raw 3-point angle) reduces false
+   // positives when the forearm/hand rotates during supination/pronation.
+   const middle=hand[9],index=hand[5],pinky=hand[17];
+   const forearmAxis=Math.atan2(wr.y-el.y,wr.x-el.x)*180/Math.PI;
+   const handAxis=Math.atan2(middle.y-hand[0].y,middle.x-hand[0].x)*180/Math.PI;
+   wristFlex=angleDiff180(forearmAxis,handAxis);
+   // Palm orientation is tracked separately as a proxy for forearm rotation.
+   // It is NOT classified as a wrist error.
+   forearmRotation=Math.atan2(pinky.y-index.y,pinky.x-index.x)*180/Math.PI;
+   if(forearmRotation<0)forearmRotation+=180;
+ }
+ return{torsoVertical,elbowDrift,shoulderMove,wristFlex,forearmRotation,hand:!!hand};
+}
+function showCurlDiag(m){
+ ui.dTorso.textContent=m.torsoVertical.toFixed(1)+"°";
+ ui.dElbowDrift.textContent=m.elbowDrift.toFixed(2);
+ ui.dShoulder.textContent=m.shoulderMove.toFixed(2);
+ ui.dHand.textContent=m.hand?"21 punti ✓":"non vista";
+ ui.dWrist.textContent=m.wristFlex==null?"--":Math.round(m.wristFlex)+"°";
+ ui.dPalm.textContent=m.forearmRotation==null?"--":Math.round(m.forearmRotation)+"°";
+}
+function analyzeCurl(lm){
+ const s=chooseSide(lm),sh=lm[s.sh],el=lm[s.el],wr=lm[s.wr],hip=lm[s.hip];
+ ui.side.textContent=s.name;
+ if([sh,el,wr,hip].some(p=>(p.visibility||0)<CFG.VIS)){trackingCoach(true);fb("Inquadra meglio il braccio: devo vedere spalla, gomito, polso e fianco.","warn",false);return}
+ trackingCoach(false);
+ let ang=angle2D(sh,el,wr);smElbow=ema(smElbow,ang,CFG.EMA);ang=smElbow;ui.elbow.textContent=Math.round(ang)+"°";
+ const validity=validateCurlPose(sh,el,wr,hip,state);
+ invalidMovementCoach(!validity.valid,"Il movimento non corrisponde a un curl. Tieni il gomito vicino al fianco.");
+ if(!validity.valid){
+   // Hard gate: a movement resembling an overhead/military press cannot
+   // advance or complete the curl state machine.
+   topFrames=0;extFrames=0;
+   if(state!=="GET_READY" && state!=="READY"){setState("GET_READY");repStart=0;startElbowPos=null;startShoulderPos=null}
+   fb(validity.overheadLike?"Movimento non valido per il curl: non sollevare il braccio verso la testa.":"Movimento non valido per il curl: tieni il gomito vicino al busto.","warn",false);
+   debug(`exercise=curl INVALID upperArm=${validity.upperArmRaise.toFixed(1)} elbowHip=${validity.elbowHip.toFixed(2)}`);
+   return;
+ }
+ const torso=Math.max(.08,dist(sh,hip));const elbowDrift=startElbowPos?dist(el,startElbowPos)/torso:0;const shoulderSwing=startShoulderPos?dist(sh,startShoulderPos)/torso:0;
+ const hand=nearestHandToWrist(wr);
+ const adv=curlAdvancedMetrics(sh,el,wr,hip,hand,startElbowPos,startShoulderPos);
+ showCurlDiag(adv);
+ collectRepTelemetry(ang,adv);
+ ErrorCoach.update("curl-torso",(state==="CURL_UP"||state==="LOWER")?adv.torsoVertical>18:false,"Mantieni il busto più verticale");
+ ErrorCoach.update("curl-wrist",(state==="CURL_UP"||state==="LOWER")&&adv.wristFlex!=null?adv.wristFlex>32:false,"Mantieni il polso più neutro");
+ ErrorCoach.update("curl-elbow",state==="CURL_UP"||state==="LOWER"?elbowDrift>CFG.ELBOW_DRIFT:false,"Tieni fermo il gomito");
+ ErrorCoach.update("curl-shoulder",state==="CURL_UP"||state==="LOWER"?shoulderSwing>CFG.SHOULDER_SWING:false,"Non aiutarti con la spalla");
+ if(state==="GET_READY"){if(ang>CFG.EXTENDED){extFrames++;if(extFrames>=3){setState("READY");fb("Pronto. Fletti il gomito senza portarlo in avanti.","good")}}else{extFrames=0;fb("Distendi il braccio per iniziare.","warn")}}
+ else if(state==="READY"){if(ang<CFG.START_CURL){repStart=performance.now();phaseUpStart=repStart;phaseTopAt=0;phaseDownStart=0;beginRepTelemetry();startElbowPos={x:el.x,y:el.y};startShoulderPos={x:sh.x,y:sh.y};topFrames=0;setState("CURL_UP");fb("Bene. Gomito fermo vicino al fianco.","good")}}
+ else if(state==="CURL_UP"){if(elbowDrift>CFG.ELBOW_DRIFT)fb("Tieni il gomito fermo: non portarlo in avanti.","warn");else if(shoulderSwing>CFG.SHOULDER_SWING)fb("Non aiutarti con la spalla. Muovi solo l'avambraccio.","warn");else fb("Continua a salire.","good");if(ang<CFG.TOP){topFrames++;if(topFrames>=CFG.TOP_FRAMES){phaseTopAt=performance.now();if(repTelemetry&&phaseUpStart)repTelemetry.upMs=phaseTopAt-phaseUpStart;setState("TOP");ui.dVelocity.textContent=repTelemetry?.upMs?(repTelemetry.upMs/1000).toFixed(2)+"s ↑":"--";fb("Ottimo. Ora scendi controllando il manubrio.","good")}}else topFrames=0;if(performance.now()-repStart>CFG.MAX_REP){setState("GET_READY");fb("Ripartiamo: distendi completamente il braccio.","warn")}}
+ else if(state==="TOP"){if(ang>CFG.TOP+15){phaseDownStart=performance.now();setState("LOWER");fb("Scendi lentamente fino a distendere il braccio.","good")}}
+ else if(state==="LOWER"){if(elbowDrift>CFG.ELBOW_DRIFT)fb("Riporta il gomito vicino al fianco.","warn");if(ang>CFG.EXTENDED){extFrames++;if(extFrames>=CFG.EXT_FRAMES){const ms=performance.now()-repStart;if(ms>=CFG.MIN_REP&&ms<=CFG.MAX_REP){reps++;if(repTelemetry&&phaseDownStart)repTelemetry.downMs=performance.now()-phaseDownStart;finishRepTelemetry();ui.reps.textContent=reps;ui.tempo.textContent=(ms/1000).toFixed(1)+"s";fb("Ripetizione "+reps+". Bene.","good",false);speakText(String(reps),{force:true,key:"rep-"+reps,cooldown:0,maxAge:5000})}setState("READY");startElbowPos=null;startShoulderPos=null;extFrames=0}}else extFrames=0}
+ debug(`exercise=curl state=${state} side=${s.name} elbow=${ang.toFixed(1)} drift=${elbowDrift.toFixed(2)} shoulder=${shoulderSwing.toFixed(2)}`)
+}
+function chooseLeg(lm){
+ const score=s=>[23+s,25+s,27+s,29+s].reduce((n,i)=>n+(lm[i]?.visibility||0),0);
+ return score(0)>=score(1)?{name:"SINISTRA",hip:23,knee:25,ankle:27,heel:29,sh:11}:{name:"DESTRA",hip:24,knee:26,ankle:28,heel:30,sh:12}
+}
+function analyzeSquat(lm){
+ const s=chooseLeg(lm),hip=lm[s.hip],knee=lm[s.knee],ankle=lm[s.ankle],sh=lm[s.sh];
+ ui.side.textContent=s.name;
+ if([sh,hip,knee,ankle].some(p=>(p.visibility||0)<SQUAT.VIS)){trackingCoach(true);fb("Per lo squat devo vedere spalla, fianco, ginocchio e caviglia. Inquadra il corpo intero di lato.","warn",false);return}
+ trackingCoach(false);
+ let kneeAng=angle2D(hip,knee,ankle);smKnee=ema(smKnee,kneeAng,SQUAT.EMA);kneeAng=smKnee;ui.elbow.textContent=Math.round(kneeAng)+"°";
+ const vertical={x:hip.x,y:hip.y-1}; const torsoAngle=angle2D(vertical,hip,sh);
+ ErrorCoach.update("squat-torso",state==="DESCENT"||state==="ASCENT"?torsoAngle>SQUAT.TORSO_WARN:false,"Mantieni il busto più stabile");
+ if(state==="GET_READY"){
+   if(kneeAng>SQUAT.STAND){standFrames++;if(standFrames>=SQUAT.STAND_FRAMES){squatReadyKneeY=knee.y;squatReadyHipY=hip.y;setState("READY");fb("Pronto. Scendi controllando il movimento.","good")}}
+   else{standFrames=0;fb("Mettiti in piedi e distendi le gambe per iniziare.","warn")}
+ }else if(state==="READY"){
+   if(kneeAng<SQUAT.START){repStart=performance.now();bottomFrames=0;setState("DESCENT");fb("Scendi con controllo.","good")}
+ }else if(state==="DESCENT"){
+   if(torsoAngle>SQUAT.TORSO_WARN)fb("Mantieni il busto più stabile durante la discesa.","warn");
+   else if(kneeAng>SQUAT.START+5){setState("READY");fb("Riparti dalla posizione eretta.","warn")}
+   else fb("Continua a scendere.","good");
+   const hipDrop=squatReadyHipY==null?0:hip.y-squatReadyHipY;
+   if(kneeAng<SQUAT.BOTTOM && hipDrop>.035){bottomFrames++;if(bottomFrames>=SQUAT.BOTTOM_FRAMES){setState("BOTTOM");fb("Profondità raggiunta. Ora risali.","good")}}else bottomFrames=0;
+   if(performance.now()-repStart>SQUAT.MAX_REP){setState("GET_READY");fb("Ripartiamo dalla posizione eretta.","warn")}
+ }else if(state==="BOTTOM"){
+   if(kneeAng>SQUAT.BOTTOM+12){setState("ASCENT");fb("Risali fino a distendere le gambe.","good")}
+ }else if(state==="ASCENT"){
+   if(kneeAng>SQUAT.STAND){standFrames++;if(standFrames>=SQUAT.STAND_FRAMES){const ms=performance.now()-repStart;if(ms>=SQUAT.MIN_REP&&ms<=SQUAT.MAX_REP){reps++;ui.reps.textContent=reps;ui.tempo.textContent=(ms/1000).toFixed(1)+"s";fb("Ripetizione "+reps+". Bene.","good",false);speakText(String(reps),{force:true,key:"rep-"+reps,cooldown:0,maxAge:5000})}setState("READY");standFrames=0}}
+   else standFrames=0
+ }
+ debug(`exercise=squat state=${state} side=${s.name} knee=${kneeAng.toFixed(1)} torso=${torsoAngle.toFixed(1)}`)
+}
+const EXERCISE_HANDLERS={curl:analyzeCurl,squat:analyzeSquat};
+function analyze(r){ExerciseEngine.update(r)}
+function loop(){if(!running)return;if(video.readyState>=2&&video.currentTime!==lastVideo){
+ lastVideo=video.currentTime;
+ try{
+  const now=performance.now();
+  const r=pose.detectForVideo(video,now);
+  if(ExerciseEngine.current?.trackers?.includes("hands")&&handLandmarker&&now-lastHandRun>=HAND_INTERVAL_MS){
+    lastHandRun=now;lastHands=handLandmarker.detectForVideo(video,now);
+  }else if(!ExerciseEngine.current?.trackers?.includes("hands"))lastHands=null;
+  const bodyFrame=BodyTracker.update(r,lastHands);MotionFeatures.push(bodyFrame);
+  draw(r,lastHands);analyze(r)
+ }catch(e){console.error(e);debug(e.message)}
+}requestAnimationFrame(loop)}
+function reset(){
+ if(typeof VoiceManager!=="undefined")VoiceManager.reset();
+ if(typeof ErrorCoach!=="undefined")ErrorCoach.clear();
+ trackingLostSince=0;trackingLostSpoken=false;
+ reps=0;ui.reps.textContent="0";ui.tempo.textContent="--";sessionStart=performance.now();sessionReps=[];repTelemetry=null;phaseUpStart=phaseTopAt=phaseDownStart=0;ui.dVelocity.textContent="--";ui.sessionRecap.classList.remove("show");ui.rCoach.innerHTML="<b>COACH:</b> il commento apparirà a fine sessione.";lastHands=null;lastHandRun=0;MotionFeatures.clear();["dTorso","dElbowDrift","dShoulder","dHand","dWrist","dPalm"].forEach(k=>ui[k].textContent="--");smElbow=null;smKnee=null;topFrames=extFrames=bottomFrames=standFrames=0;repStart=0;startElbowPos=startShoulderPos=null;lastFeedback="";setState("GET_READY");
+ const p=EXERCISE_PROFILES[activeExercise]||EXERCISE_PROFILES.curl;
+ fb(`Reset ${p.name}. Preparati nella posizione iniziale.`,"",false);
+}
+function setExercise(name){ExerciseEngine.select(name)}
+$("start").onclick=startCamera;$("finishSession").onclick=()=>{if(running){running=false;stopStream();status("SESSIONE TERMINATA","good")}buildSessionRecap()};$("exercise").onchange=e=>setExercise(e.target.value);
+$("voice").onclick=()=>{voiceEnabled=!voiceEnabled;$("voice").textContent=voiceEnabled?"🔊 VOCE":"🔇 MUTO";if(!voiceEnabled&&typeof VoiceManager!=="undefined")VoiceManager.reset();else if(voiceReady)speakText("Voce attiva",{force:true});else fb("La voce italiana si sta ancora caricando. Riprova tra qualche secondo.","warn",false)};
+$("testBeep").onclick=async()=>{ui.vdPlay.textContent="Ultimo test: test audio…";await audioBeep()};
+$("testVoice").onclick=async()=>{
+ await audioBeep();
+ try{
+  await initVoice();
+  speakText("Ciao, il coach vocale funziona",{force:true,maxAge:15000});
+ }catch(e){vline(ui.vdPlay,"Ultimo test","Paola non pronta: "+(e?.message||e),false)}
+};
+$("switch").onclick=async()=>{facing=facing==="environment"?"user":"environment";if(running){running=false;stopStream();await startCamera()}};$("reset").onclick=reset;if(!window.isSecureContext){status("HTTPS RICHIESTO","bad");fb("Apri l'app tramite HTTPS.","bad")}init();
+
+window.getBiomechanicalFrame=()=>BodyTracker.frame;
 </script></body></html>
