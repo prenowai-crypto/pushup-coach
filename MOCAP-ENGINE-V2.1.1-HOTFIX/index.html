@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MOCAP ENGINE V5.1 · Continuous Human Mesh</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#071019;color:#eef5f8;font:14px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:14px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:#9db0bd;margin-bottom:10px}
+.toolbar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:10px}
+button{border:0;border-radius:9px;padding:10px 13px;font-weight:800;background:#244157;color:#fff;cursor:pointer}
+button.go{background:#43d48d;color:#06120c}button.stop{background:#e66e6e;color:#1a0707}
+.chip{padding:6px 9px;border-radius:8px;background:#142535;font:700 12px ui-monospace,monospace}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:#101a24;border:1px solid #263a49;border-radius:14px;padding:10px;min-width:0}
+.card h2{font-size:14px;margin:0 0 8px;color:#d6e3ea}
+.stage{position:relative;aspect-ratio:4/3;min-height:330px;overflow:hidden;border-radius:10px;background:#000}
+video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mirror{transform:scaleX(-1)}
+#threeHost{position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,#f2f3f4 0%,#d1d4d7 55%,#aeb3b8 100%)}
+#threeHost canvas{display:block}
+.diag{margin-top:10px;background:#071019;border:1px solid #2c475c;border-radius:10px;padding:10px;font:700 13px ui-monospace,monospace;line-height:1.55}
+.note{margin-top:8px;color:#a7bbc7;font-size:12px;line-height:1.45}
+#log{white-space:pre-wrap;background:#071019;border-radius:10px;padding:9px;max-height:140px;overflow:auto;color:#9eb4c1}
+.good{color:#55dd97}.warn{color:#ffd36a}.bad{color:#ff9393}
+label{display:flex;align-items:center;gap:6px;background:#142535;padding:7px 9px;border-radius:8px;font-weight:700}
+input[type=checkbox]{width:18px;height:18px}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js"></script>
+</head>
+<body>
+<h1>MOCAP ENGINE V5.1 · CONTINUOUS HUMAN MESH</h1>
+<div class="sub">Tracking V2.1.2 invariato. La resa 3D viene rifatta come corpo umano tecnico continuo, con superfici taperizzate e wireframe anatomico.</div>
+
+<div class="toolbar">
+  <button id="start" class="go">AVVIA CAMERA</button>
+  <button id="stop" class="stop">STOP</button>
+  <label><input id="solid" type="checkbox" checked> SOLID</label>
+  <label><input id="wire" type="checkbox" checked> WIREFRAME</label>
+  <label><input id="debug" type="checkbox"> DEBUG SKELETON</label>
+  <span id="camState" class="chip">CAM —</span>
+  <span id="poseState" class="chip">POSE —</span>
+  <span id="fpsState" class="chip">FPS —</span>
+  <span class="chip">V2.1.2 MASTER · CONTINUOUS MESH</span>
+</div>
+
+<div class="grid">
+  <section class="card">
+    <h2>CAMERA + RAW LANDMARK</h2>
+    <div class="stage">
+      <video id="video" class="mirror" playsinline autoplay muted></video>
+      <canvas id="overlay" class="mirror"></canvas>
+    </div>
+    <div class="diag" id="diag">HEAD —<br>CORE —<br>LOWER —<br>MODE —</div>
+    <div class="note">La vista di sinistra resta il master: x/y sono quelli della webcam. La profondità z serve solo a dare volume 3D.</div>
+  </section>
+
+  <section class="card">
+    <h2>HUMAN 3D · CONTINUOUS TECH MESH</h2>
+    <div class="stage">
+      <div id="threeHost" class="mirror"></div>
+    </div>
+    <div class="note">Torso, arti e collo non sono più ellissi/cilindri separati: vengono ricostruiti come superfici taperizzate con sezioni collegate e wireframe continuo.</div>
+  </section>
+</div>
+
+<pre id="log">BUILD V5.1 caricato. Premi AVVIA CAMERA.</pre>
+
+<script type="module">
+import * as THREE from "three";
+
+const $=id=>document.getElementById(id);
+const video=$("video"), overlay=$("overlay"), ctx=overlay.getContext("2d"), host=$("threeHost");
+const log=s=>{$("log").textContent=s+"\n"+$("log").textContent.slice(0,2600)};
+
+const EDGES=[
+ [0,2],[2,7],[0,5],[5,8],
+ [11,12],[11,13],[13,15],[15,17],[15,19],[15,21],
+ [12,14],[14,16],[16,18],[16,20],[16,22],
+ [11,23],[12,24],[23,24],
+ [23,25],[25,27],[27,29],[29,31],
+ [24,26],[26,28],[28,30],[30,32]
+];
+
+let stream=null,running=false,busy=false,lastVideoTime=-1,fpsN=0,fpsT=performance.now(),aspect=4/3;
+
+function fitOverlay(){
+  const w=video.videoWidth||960,h=video.videoHeight||720;
+  if(overlay.width!==w||overlay.height!==h){overlay.width=w;overlay.height=h}
+  resizeThree(w,h);
+}
+function P(lm,i,w,h){const p=lm?.[i];return p?{x:p.x*w,y:p.y*h,z:p.z||0,v:p.visibility??0}:null}
+function drawRaw(lm){
+  fitOverlay();const w=overlay.width,h=overlay.height;ctx.clearRect(0,0,w,h);if(!lm)return;
+  ctx.lineCap="round";ctx.lineJoin="round";
+  for(const [a,b] of EDGES){
+    const A=P(lm,a,w,h),B=P(lm,b,w,h);if(!A||!B)continue;const c=Math.min(A.v,B.v);
+    ctx.strokeStyle=c>.6?"#42e79a":c>.32?"#ffd360":"#ff7a7a";ctx.globalAlpha=Math.max(.16,c);ctx.lineWidth=Math.max(2,w*.004);
+    ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.stroke();
+  }
+  for(let i=0;i<33;i++){
+    const p=P(lm,i,w,h);if(!p)continue;const c=p.v;ctx.fillStyle=c>.6?"#62f0a9":c>.32?"#ffe071":"#ff8181";
+    ctx.globalAlpha=Math.max(.18,c);ctx.beginPath();ctx.arc(p.x,p.y,i<=10?w*.006:w*.0045,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+// ---------------- Three.js scene ----------------
+const scene=new THREE.Scene();
+const camera=new THREE.OrthographicCamera(-aspect/2,aspect/2,.5,-.5,.01,20);
+camera.position.set(0,0,4);camera.lookAt(0,0,0);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0x000000,0);host.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff,0x7c858d,2.3));
+const key=new THREE.DirectionalLight(0xffffff,2.1);key.position.set(-2,4,5);scene.add(key);
+const rim=new THREE.DirectionalLight(0xb7d9ef,1.25);rim.position.set(3,1,3);scene.add(rim);
+
+function resizeThree(w=video.videoWidth||960,h=video.videoHeight||720){
+  aspect=w/Math.max(1,h);camera.left=-aspect/2;camera.right=aspect/2;camera.top=.5;camera.bottom=-.5;camera.updateProjectionMatrix();
+  renderer.setSize(host.clientWidth||w,host.clientHeight||h,false);
+}
+addEventListener("resize",()=>resizeThree());
+
+const human=new THREE.Group();scene.add(human);
+const debugGroup=new THREE.Group();scene.add(debugGroup);
+const fillMat=new THREE.MeshStandardMaterial({color:0xd9dde1,roughness:.72,metalness:.03,transparent:true,opacity:.62,side:THREE.DoubleSide});
+const fillMatDark=new THREE.MeshStandardMaterial({color:0xc6cbd0,roughness:.78,metalness:.03,transparent:true,opacity:.58,side:THREE.DoubleSide});
+const wireMat=new THREE.LineBasicMaterial({color:0x2b2d30,transparent:true,opacity:.78});
+const debugMat=new THREE.LineBasicMaterial({color:0x00b8ff,transparent:true,opacity:.75});
+
+function makeDynamicPart(rings,sides,fill=fillMat){
+  const geo=new THREE.BufferGeometry();
+  const verts=new Float32Array(rings*sides*3);
+  geo.setAttribute('position',new THREE.BufferAttribute(verts,3));
+  const idx=[];
+  for(let r=0;r<rings-1;r++) for(let s=0;s<sides;s++){
+    const n=(s+1)%sides,a=r*sides+s,b=r*sides+n,c=(r+1)*sides+s,d=(r+1)*sides+n;
+    idx.push(a,c,b,b,c,d);
+  }
+  geo.setIndex(idx);geo.computeVertexNormals();
+  const mesh=new THREE.Mesh(geo,fill.clone());
+  const wire=new THREE.LineSegments(new THREE.WireframeGeometry(geo),wireMat.clone());
+  const g=new THREE.Group();g.add(mesh,wire);g.geo=geo;g.mesh=mesh;g.wire=wire;g.rings=rings;g.sides=sides;human.add(g);return g;
+}
+function makeStaticPart(geo,fill=fillMat){
+  const mesh=new THREE.Mesh(geo,fill.clone());
+  const wire=new THREE.LineSegments(new THREE.WireframeGeometry(geo),wireMat.clone());
+  const g=new THREE.Group();g.add(mesh,wire);g.mesh=mesh;g.wire=wire;human.add(g);return g;
+}
+
+const armRings=7,legRings=8,torsoRings=6,neckRings=4,sides=12;
+const parts={
+  torso:makeDynamicPart(torsoRings,14),
+  neck:makeDynamicPart(neckRings,12),
+  lArm:makeDynamicPart(armRings,sides),rArm:makeDynamicPart(armRings,sides),
+  lLeg:makeDynamicPart(legRings,sides,fillMatDark),rLeg:makeDynamicPart(legRings,sides,fillMatDark),
+  head:makeStaticPart(makeHeadGeometry(),fillMat),
+  lHand:makeStaticPart(new THREE.SphereGeometry(1,16,12),fillMat),rHand:makeStaticPart(new THREE.SphereGeometry(1,16,12),fillMat),
+  lFoot:makeStaticPart(new THREE.SphereGeometry(1,18,12),fillMatDark),rFoot:makeStaticPart(new THREE.SphereGeometry(1,18,12),fillMatDark)
+};
+
+function makeHeadGeometry(){
+  const g=new THREE.SphereGeometry(1,30,24);
+  const p=g.attributes.position;
+  for(let i=0;i<p.count;i++){
+    let x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+    const lower=Math.max(0,-y);
+    const upper=Math.max(0,y);
+    const jaw=1-lower*.22;
+    const cranium=1+upper*.04;
+    x*=jaw*cranium;z*=jaw*.92+upper*.05;
+    y*=1.04;
+    p.setXYZ(i,x,y,z);
+  }
+  p.needsUpdate=true;g.computeVertexNormals();return g;
+}
+
+const debugLines=[];
+for(const [a,b] of EDGES){
+  const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]);
+  const l=new THREE.Line(g,debugMat);debugGroup.add(l);debugLines.push({a,b,l});
+}
+
+function updateStyle(){
+  for(const g of Object.values(parts)){
+    g.mesh.visible=$("solid").checked;
+    g.wire.visible=$("wire").checked;
+  }
+}
+$("solid").onchange=updateStyle;$("wire").onchange=updateStyle;updateStyle();
+
+function J(lm2,lm3,i){
+  const p=lm2?.[i];if(!p)return null;
+  const z=lm3?.[i] ? -lm3[i].z*.20 : -(p.z||0)*.07;
+  return {p:new THREE.Vector3((p.x-.5)*aspect,.5-p.y,z),v:p.visibility??0};
+}
+function usable(j,t=.30){return !!j&&j.v>=t}
+function mid3(a,b){return a.clone().add(b).multiplyScalar(.5)}
+function d3(a,b){return a.distanceTo(b)}
+function lerp3(a,b,t){return a.clone().lerp(b,t)}
+function clamp(n,a,b){return Math.max(a,Math.min(b,n))}
+
+function frameForTangent(tangent){
+  const t=tangent.clone().normalize();
+  let n1=new THREE.Vector3().crossVectors(t,new THREE.Vector3(0,0,1));
+  if(n1.lengthSq()<1e-6)n1=new THREE.Vector3().crossVectors(t,new THREE.Vector3(0,1,0));
+  n1.normalize();const n2=new THREE.Vector3().crossVectors(t,n1).normalize();return {n1,n2};
+}
+
+function updateTube(part,centers,radii,depthScale=1){
+  if(!centers||centers.length!==part.rings||radii.length!==part.rings){part.visible=false;return}
+  part.visible=true;
+  const arr=part.geo.attributes.position.array;
+  for(let r=0;r<part.rings;r++){
+    const c=centers[r];
+    const prev=centers[Math.max(0,r-1)],next=centers[Math.min(part.rings-1,r+1)];
+    const tangent=next.clone().sub(prev);const {n1,n2}=frameForTangent(tangent);
+    const rx=radii[r],rz=radii[r]*depthScale;
+    for(let s=0;s<part.sides;s++){
+      const a=s/part.sides*Math.PI*2;
+      const v=c.clone().addScaledVector(n1,Math.cos(a)*rx).addScaledVector(n2,Math.sin(a)*rz);
+      const k=(r*part.sides+s)*3;arr[k]=v.x;arr[k+1]=v.y;arr[k+2]=v.z;
+    }
+  }
+  part.geo.attributes.position.needsUpdate=true;part.geo.computeVertexNormals();
+  part.wire.geometry.dispose();part.wire.geometry=new THREE.WireframeGeometry(part.geo);
+}
+
+function updateTorso(part,centers,widths,depths,xAxis,zAxis){
+  if(!centers){part.visible=false;return}
+  part.visible=true;const arr=part.geo.attributes.position.array;
+  for(let r=0;r<part.rings;r++){
+    const c=centers[r],rx=widths[r],rz=depths[r];
+    for(let s=0;s<part.sides;s++){
+      const a=s/part.sides*Math.PI*2;
+      const v=c.clone().addScaledVector(xAxis,Math.cos(a)*rx).addScaledVector(zAxis,Math.sin(a)*rz);
+      const k=(r*part.sides+s)*3;arr[k]=v.x;arr[k+1]=v.y;arr[k+2]=v.z;
+    }
+  }
+  part.geo.attributes.position.needsUpdate=true;part.geo.computeVertexNormals();
+  part.wire.geometry.dispose();part.wire.geometry=new THREE.WireframeGeometry(part.geo);
+}
+
+function torsoFrame(LS,RS,LH,RH){
+  if(!(usable(LS,.3)&&usable(RS,.3)))return null;
+  const sc=mid3(LS.p,RS.p),hc=usable(LH,.24)&&usable(RH,.24)?mid3(LH.p,RH.p):sc.clone().add(new THREE.Vector3(0,-d3(LS.p,RS.p)*.72,0));
+  let x=RS.p.clone().sub(LS.p).normalize();let y=sc.clone().sub(hc).normalize();let z=new THREE.Vector3().crossVectors(x,y);
+  if(z.lengthSq()<1e-6)z.set(0,0,1);else z.normalize();y=new THREE.Vector3().crossVectors(z,x).normalize();
+  return {sc,hc,x,y,z};
+}
+
+function updateDebug(j){
+  debugGroup.visible=$("debug").checked;
+  if(!debugGroup.visible)return;
+  debugLines.forEach(({a,b,l})=>{
+    const A=j[a],B=j[b];if(!usable(A,.28)||!usable(B,.28)){l.visible=false;return}
+    l.visible=true;const arr=l.geometry.attributes.position.array;
+    arr[0]=A.p.x;arr[1]=A.p.y;arr[2]=A.p.z+.02;arr[3]=B.p.x;arr[4]=B.p.y;arr[5]=B.p.z+.02;l.geometry.attributes.position.needsUpdate=true;
+  });
+}
+
+function poseArm(part,S,E,W,base){
+  if(!(usable(S,.28)&&usable(E,.28)&&usable(W,.28))){part.visible=false;return}
+  const centers=[
+    S.p.clone(),lerp3(S.p,E.p,.28),lerp3(S.p,E.p,.62),E.p.clone(),lerp3(E.p,W.p,.38),lerp3(E.p,W.p,.74),W.p.clone()
+  ];
+  const radii=[base*1.28,base*1.12,base*.98,base*.72,base*.83,base*.68,base*.52];
+  updateTube(part,centers,radii,.92);
+}
+function poseLeg(part,H,K,A,base){
+  if(!(usable(H,.26)&&usable(K,.26)&&usable(A,.26))){part.visible=false;return}
+  const centers=[H.p.clone(),lerp3(H.p,K.p,.23),lerp3(H.p,K.p,.53),lerp3(H.p,K.p,.80),K.p.clone(),lerp3(K.p,A.p,.38),lerp3(K.p,A.p,.75),A.p.clone()];
+  const radii=[base*1.38,base*1.26,base*1.16,base*.95,base*.77,base*.88,base*.66,base*.50];
+  updateTube(part,centers,radii,.95);
+}
+
+function poseHand(obj,W,I,P,base){
+  if(!usable(W,.26)){obj.visible=false;return}
+  obj.visible=true;let c=W.p.clone(),q=new THREE.Quaternion();
+  if(usable(I,.18)&&usable(P,.18)){
+    const palm=mid3(I.p,P.p);c=mid3(W.p,palm);
+    let x=I.p.clone().sub(P.p).normalize(),y=palm.clone().sub(W.p).normalize(),z=new THREE.Vector3().crossVectors(x,y);
+    if(z.lengthSq()<1e-6)z.set(0,0,1);else z.normalize();y=new THREE.Vector3().crossVectors(z,x).normalize();
+    q.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,z));
+  }
+  obj.position.copy(c);obj.quaternion.copy(q);obj.scale.set(base*.85,base*1.25,base*.48);
+}
+function poseFoot(obj,A,T,base){
+  if(!(usable(A,.24)&&usable(T,.20))){obj.visible=false;return}
+  obj.visible=true;const d=T.p.clone().sub(A.p),L=d.length();obj.position.copy(mid3(A.p,T.p));
+  obj.quaternion.setFromUnitVectors(new THREE.Vector3(1,0,0),d.normalize());obj.scale.set(Math.max(base*1.2,L*.63),base*.48,base*.68);
+}
+
+function updateHuman(lm2,lm3){
+  const j=Array.from({length:33},(_,i)=>J(lm2,lm3,i));updateDebug(j);
+  const LS=j[11],RS=j[12],LE=j[13],RE=j[14],LW=j[15],RW=j[16],LH=j[23],RH=j[24],LK=j[25],RK=j[26],LA=j[27],RA=j[28],LF=j[31],RF=j[32];
+  const nose=j[0],lear=j[7],rear=j[8];const frame=torsoFrame(LS,RS,LH,RH);
+  const sw=usable(LS,.25)&&usable(RS,.25)?d3(LS.p,RS.p):.28;const armR=Math.max(.013,sw*.067),legR=Math.max(.015,sw*.086);
+
+  // torso continuous rings: shoulder -> chest -> ribs -> waist -> hips -> low pelvis
+  if(frame){
+    const hipsOK=usable(LH,.24)&&usable(RH,.24);const hipW=hipsOK?d3(LH.p,RH.p):sw*.72;const sc=frame.sc,hc=frame.hc;
+    const centers=[lerp3(sc,hc,.02),lerp3(sc,hc,.18),lerp3(sc,hc,.38),lerp3(sc,hc,.61),lerp3(sc,hc,.82),hc.clone()];
+    const widths=[sw*.47,sw*.45,sw*.40,sw*.32,Math.max(hipW*.43,sw*.31),Math.max(hipW*.50,sw*.34)];
+    const depths=[sw*.20,sw*.21,sw*.19,sw*.155,sw*.17,sw*.18];
+    updateTorso(parts.torso,centers,widths,depths,frame.x,frame.z);
+  } else parts.torso.visible=false;
+
+  // neck as short tapered tube
+  let headC=null,headRX=sw*.15,headRY=sw*.20,headRZ=sw*.145;
+  if(usable(lear,.22)&&usable(rear,.22)){
+    headC=mid3(lear.p,rear.p);if(usable(nose,.2))headC.lerp(nose.p,.22);const ew=d3(lear.p,rear.p);headRX=Math.max(sw*.115,ew*.69);headRY=headRX*1.28;headRZ=headRX*.90;
+  } else if(usable(nose,.3)) headC=nose.p.clone().add(new THREE.Vector3(0,sw*.025,0));
+  if(headC){parts.head.visible=true;parts.head.position.copy(headC);parts.head.scale.set(headRX,headRY,headRZ);}else parts.head.visible=false;
+  if(headC&&frame){
+    const top=headC.clone().addScaledVector(frame.y,-headRY*.66),bottom=frame.sc.clone().addScaledVector(frame.y,-sw*.035);
+    const centers=[bottom.clone(),lerp3(bottom,top,.35),lerp3(bottom,top,.7),top.clone()];
+    updateTube(parts.neck,centers,[sw*.042,sw*.040,sw*.036,sw*.034],.92);
+  } else parts.neck.visible=false;
+
+  poseArm(parts.lArm,LS,LE,LW,armR);poseArm(parts.rArm,RS,RE,RW,armR);
+  poseLeg(parts.lLeg,LH,LK,LA,legR);poseLeg(parts.rLeg,RH,RK,RA,legR);
+  poseHand(parts.lHand,LW,j[19],j[17],armR);poseHand(parts.rHand,RW,j[20],j[18],armR);
+  poseFoot(parts.lFoot,LA,LF,legR);poseFoot(parts.rFoot,RA,RF,legR);
+  updateStyle();
+}
+
+function diagnostics(lm){
+  const v=i=>lm?.[i]?.visibility??0;const head=Math.max(v(0),v(7),v(8));const core=[11,12,23,24].filter(i=>v(i)>.35).length,lower=[25,26,27,28].filter(i=>v(i)>.35).length;
+  $("diag").innerHTML=`HEAD <span class="${head>.45?"good":head>.25?"warn":"bad"}">${head>.45?"OK":head>.25?"DEBOLE":"PERSA"} ${head.toFixed(2)}</span><br>`+
+    `CORE ${core}/4<br>LOWER ${lower}/4<br>MODE <span class="good">CONTINUOUS HUMAN MESH</span>`;
+}
+
+const pose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${f}`});
+pose.setOptions({modelComplexity:2,smoothLandmarks:true,enableSegmentation:true,smoothSegmentation:true,minDetectionConfidence:.55,minTrackingConfidence:.55});
+pose.onResults(r=>{
+  busy=false;if(!r.poseLandmarks){$("poseState").textContent="POSE LOST";drawRaw(null);return}
+  $("poseState").textContent="POSE OK";drawRaw(r.poseLandmarks);updateHuman(r.poseLandmarks,r.poseWorldLandmarks);diagnostics(r.poseLandmarks);
+  const now=performance.now();fpsN++;if(now-fpsT>1000){$("fpsState").textContent=`FPS ${fpsN}`;fpsN=0;fpsT=now}
+});
+async function loop(){
+  if(!running)return;
+  if(video.readyState>=2&&video.currentTime!==lastVideoTime&&!busy){lastVideoTime=video.currentTime;busy=true;try{await pose.send({image:video})}catch(e){busy=false;log("Pose error: "+e.message)}}
+  requestAnimationFrame(loop);
+}
+$("start").onclick=async()=>{
+  if(running)return;
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}},audio:false});video.srcObject=stream;await video.play();fitOverlay();running=true;$("camState").textContent="CAM OK";log("Camera avviata. V5.1: tracking invariato, mesh umana continua attiva.");loop()}
+  catch(e){$("camState").textContent="CAM ERROR";log("Camera: "+e.message)}
+};
+$("stop").onclick=()=>{running=false;busy=false;stream?.getTracks().forEach(t=>t.stop());stream=null;$("camState").textContent="CAM STOP"};
+(function animate(){requestAnimationFrame(animate);renderer.render(scene,camera)})();
+resizeThree();
+</script>
+</body>
+</html>
