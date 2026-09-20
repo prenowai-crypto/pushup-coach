@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>MOCAP ENGINE V7.0 · VRM RETARGET DEBUG</title>
+<title>MOCAP ENGINE V7.1 · HUMAN VRM RETARGET DEBUG</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#071019;color:#eef5f8;font:14px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:14px}
@@ -31,12 +31,12 @@ video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js"></script>
 </head>
 <body>
-<h1>MOCAP ENGINE V7.0 · VRM RETARGET DEBUG</h1>
-<div class="sub">Tracking V2.1.2 del MASTER mantenuto: stessi MediaPipe landmarks, stesso camera-space e stessa Z. La novità è solo il layer di rendering: una vera mesh VRM riggata guidata da un solver separato. Se il modello test non piace esteticamente, puoi caricare qualsiasi file .vrm senza cambiare il tracking.</div>
+<h1>MOCAP ENGINE V7.1 · HUMAN VRM RETARGET DEBUG</h1>
+<div class="sub">Tracking V2.1.2 del MASTER mantenuto: stessi MediaPipe landmarks, stesso camera-space e stessa Z. La novità è solo il layer di rendering: una vera mesh VRM riggata guidata da un solver separato. Il modello test ora è un avatar umano singolo (AliciaSolid): niente braccia meccaniche/accessori multipli. Puoi comunque caricare qualsiasi file .vrm senza cambiare il tracking.</div>
 <div class="toolbar">
   <button id="start" class="go">AVVIA CAMERA</button><button id="stop" class="stop">STOP</button>
   <label class="filebtn" for="vrmFile">CARICA VRM</label><input id="vrmFile" type="file" accept=".vrm,model/gltf-binary">
-  <button id="sample">RICARICA MODELLO TEST</button>
+  <button id="sample">RICARICA UMANO TEST</button>
   <label><input id="white" type="checkbox" checked> WHITE</label>
   <label><input id="debug" type="checkbox" checked> SKELETON</label>
   <span id="camState" class="chip">CAM —</span><span id="poseState" class="chip">POSE —</span><span id="vrmState" class="chip">VRM LOADING</span><span id="fpsState" class="chip">FPS —</span>
@@ -44,10 +44,10 @@ video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.
 <div class="grid">
 <section class="card"><h2>CAMERA + RAW LANDMARK · MASTER V2.1.2</h2><div class="stage"><video id="video" class="mirror" playsinline autoplay muted></video><canvas id="overlay" class="mirror"></canvas></div>
 <div class="diag" id="diag">HEAD —<br>CORE —<br>LOWER —<br>MODE —</div><div class="note">Questa parte replica il MASTER V6.1: x/y restano nel camera-space e la z arriva dai world landmarks, riscalata sulla dimensione del torso.</div></section>
-<section class="card"><h2>VRM HUMAN · CUSTOM RETARGETER</h2><div class="stage"><div id="threeHost" class="mirror"></div></div>
-<div class="note">Il modello non viene ricostruito frame-per-frame. La mesh resta intatta: vengono ruotate le normalized human bones VRM. Skeleton azzurro = target MediaPipe effettivo.</div></section>
+<section class="card"><h2>HUMAN VRM · CUSTOM RETARGETER</h2><div class="stage"><div id="threeHost" class="mirror"></div></div>
+<div class="note">V7.1 isola il problema correttamente: il precedente Seed-san è volutamente multi-braccio. Qui usiamo un avatar umano singolo. La mesh resta intatta e vengono ruotate solo le normalized human bones VRM. Skeleton azzurro = target MediaPipe effettivo.</div></section>
 </div>
-<pre id="log">BUILD V7.0 caricato. Sto caricando il modello VRM test…</pre>
+<pre id="log">BUILD V7.1 caricato. Sto caricando un avatar umano singolo…</pre>
 
 <script type="module">
 import * as THREE from "three";
@@ -88,7 +88,7 @@ function updateDebug(j){debugGroup.visible=$("debug").checked;debugLines.forEach
 
 // --- VRM loader + retargeter ---
 const loader=new GLTFLoader();loader.crossOrigin="anonymous";loader.register(parser=>new VRMLoaderPlugin(parser));
-const SAMPLE_URL="https://cdn.jsdelivr.net/gh/vrm-c/vrm-specification@master/samples/Seed-san/vrm/Seed-san.vrm";
+const SAMPLE_URL="https://cdn.jsdelivr.net/gh/w-okada/mediapipe-avatar-js@master/demo/public/AliciaSolid.vrm";
 let currentVrm=null,currentObjectUrl=null,modelTorso=.40,lastJoints=null;
 const restAxes=new Map();
 const WHITE_MAT=()=>new THREE.MeshPhysicalMaterial({color:0xf5f7f8,roughness:.52,metalness:0,clearcoat:.08,clearcoatRoughness:.78,side:THREE.DoubleSide});
@@ -178,7 +178,7 @@ function updateVRM(j){
 }
 
 function updateHuman(lm2,lm3){const M=buildJointMapper(lm2,lm3),j=Array.from({length:33},(_,i)=>M(i));lastJoints=j;updateDebug(j);updateVRM(j)}
-function diagnostics(lm){const v=i=>lm?.[i]?.visibility??0,head=Math.max(v(0),v(7),v(8)),core=[11,12,23,24].filter(i=>v(i)>.35).length,lower=[25,26,27,28].filter(i=>v(i)>.35).length;$("diag").innerHTML=`HEAD <span class="${head>.45?"good":head>.25?"warn":"bad"}">${head>.45?"OK":head>.25?"DEBOLE":"PERSA"} ${head.toFixed(2)}</span><br>CORE ${core}/4<br>LOWER ${lower}/4<br>MODE <span class="good">V7.0 VRM CUSTOM RETARGET</span>`}
+function diagnostics(lm){const v=i=>lm?.[i]?.visibility??0,head=Math.max(v(0),v(7),v(8)),core=[11,12,23,24].filter(i=>v(i)>.35).length,lower=[25,26,27,28].filter(i=>v(i)>.35).length;$("diag").innerHTML=`HEAD <span class="${head>.45?"good":head>.25?"warn":"bad"}">${head>.45?"OK":head>.25?"DEBOLE":"PERSA"} ${head.toFixed(2)}</span><br>CORE ${core}/4<br>LOWER ${lower}/4<br>MODE <span class="good">V7.1 HUMAN VRM CUSTOM RETARGET</span>`}
 
 // --- MediaPipe: configurazione del MASTER invariata ---
 const pose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${f}`});pose.setOptions({modelComplexity:2,smoothLandmarks:true,enableSegmentation:true,smoothSegmentation:true,minDetectionConfidence:.55,minTrackingConfidence:.55});
@@ -187,11 +187,11 @@ async function loop(){if(!running)return;if(video.readyState>=2&&video.currentTi
 $("start").onclick=async()=>{if(running)return;try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}},audio:false});video.srcObject=stream;await video.play();fitOverlay();running=true;$("camState").textContent="CAM OK";log("Camera avviata. Tracking MASTER invariato; il retargeter muove solo le ossa VRM.");loop()}catch(e){$("camState").textContent="CAM ERROR";log("Camera: "+e.message)}};
 $("stop").onclick=()=>{running=false;busy=false;stream?.getTracks().forEach(t=>t.stop());stream=null;$("camState").textContent="CAM STOP"};
 $("white").onchange=setWhiteMode;$("debug").onchange=()=>{debugGroup.visible=$("debug").checked};
-$("sample").onclick=()=>loadVRM(SAMPLE_URL,"Seed-san VRM 1.0");
+$("sample").onclick=()=>loadVRM(SAMPLE_URL,"AliciaSolid HUMAN VRM");
 $("vrmFile").onchange=async e=>{const f=e.target.files?.[0];if(!f)return;if(currentObjectUrl)URL.revokeObjectURL(currentObjectUrl);currentObjectUrl=URL.createObjectURL(f);await loadVRM(currentObjectUrl,f.name)};
 
 const clock=new THREE.Clock();(function animate(){requestAnimationFrame(animate);const dt=Math.min(.05,clock.getDelta());if(currentVrm){try{currentVrm.update(dt)}catch(e){}}renderer.render(scene,camera)})();resizeThree();
-loadVRM(SAMPLE_URL,"Seed-san VRM 1.0");
+loadVRM(SAMPLE_URL,"AliciaSolid HUMAN VRM");
 </script>
 </body>
 </html>
