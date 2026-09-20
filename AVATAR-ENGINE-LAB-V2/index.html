@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Avatar Engine Lab V2</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#071019;color:#edf4f8;font:14px system-ui;padding:14px}h1{font-size:21px;margin:0 0 4px}.muted{color:#9fb1c0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.card{background:#101a24;border:1px solid #26394a;border-radius:14px;padding:10px}.stage{position:relative;aspect-ratio:3/4;max-height:70vh}video,canvas{width:100%;height:100%;object-fit:cover;border-radius:10px;background:#000}.mirror{transform:scaleX(-1)}
+button{padding:10px 13px;border:0;border-radius:9px;font-weight:750;margin:6px 4px 6px 0}.go{background:#50dc91}.stop{background:#ef7474}.chip{display:inline-block;padding:5px 8px;border-radius:8px;background:#172736;margin:3px}.ok{color:#56e49b}.bad{color:#ff7777}
+pre{white-space:pre-wrap;background:#081119;padding:9px;border-radius:9px;max-height:120px;overflow:auto}.legend{margin-top:8px;font-size:12px;color:#a9bdca}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js"></script>
+</head><body>
+<h1>Avatar Engine Lab V2 · Independent Solver</h1>
+<div class="muted">MediaPipe 3D → nostro BodyFrame → nostro limb solver → VRM. Nessun Kalidokit.</div>
+<button id="start" class="go">AVVIA</button><button id="stop" class="stop">STOP</button>
+<span class="chip" id="cam">CAM —</span><span class="chip" id="poseState">POSE —</span><span class="chip" id="vrmState">VRM —</span><span class="chip" id="fps">FPS —</span>
+<div class="grid">
+<div class="card"><b>RAW BODY</b><div class="stage"><video id="video" class="mirror" autoplay playsinline muted></video><canvas id="overlay" class="mirror" style="position:absolute;inset:0"></canvas></div><div class="legend">Verde = landmark misurati da MediaPipe.</div></div>
+<div class="card"><b>SOLVED AVATAR</b><div class="stage" id="avatarStage"></div><div class="legend">Trascina per ruotare la vista. V2 pilota prima gli arti; root/testa sono volutamente conservativi per evitare flip.</div></div>
+</div><pre id="log">Inizializzazione…</pre>
+<script type="module">
+import * as THREE from "three";
+import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
+import {OrbitControls} from "three/addons/controls/OrbitControls.js";
+import {VRMLoaderPlugin,VRMUtils} from "https://esm.sh/@pixiv/three-vrm@3.4.4?external=three";
+
+const $=id=>document.getElementById(id), video=$("video"), overlay=$("overlay"), ctx=overlay.getContext("2d"), stage=$("avatarStage");
+const log=s=>$("log").textContent=s+"\n"+$("log").textContent.slice(0,1800);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));stage.appendChild(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b1219);
+const camera=new THREE.PerspectiveCamera(30,1,.1,20);camera.position.set(0,1.25,4.5);
+const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,1,0);controls.enableDamping=true;
+scene.add(new THREE.HemisphereLight(0xffffff,0x334455,2.4));let dl=new THREE.DirectionalLight(0xffffff,2);dl.position.set(2,4,3);scene.add(dl);scene.add(new THREE.GridHelper(5,10));
+let vrm=null,stream=null,running=false,busy=false,frames=0,fpsT=performance.now();
+function resize(){let r=stage.getBoundingClientRect();renderer.setSize(Math.max(260,r.width),Math.max(320,r.height),false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();let v=video.getBoundingClientRect();overlay.width=Math.max(1,Math.round(v.width*devicePixelRatio));overlay.height=Math.max(1,Math.round(v.height*devicePixelRatio))}
+addEventListener("resize",resize);resize();
+
+const gltfLoader=new GLTFLoader();gltfLoader.crossOrigin="anonymous";gltfLoader.register(p=>new VRMLoaderPlugin(p));
+try{let g=await gltfLoader.loadAsync("https://raw.githubusercontent.com/madjin/vrm-samples/master/Avatar_Orion.vrm");vrm=g.userData.vrm;VRMUtils.removeUnnecessaryJoints(vrm.scene);if(vrm.meta?.metaVersion==="0")VRMUtils.rotateVRM0(vrm);scene.add(vrm.scene);$("vrmState").textContent="VRM OK";$("vrmState").classList.add("ok");log("Avatar caricato. Solver indipendente pronto.")}catch(e){$("vrmState").textContent="VRM ERRORE";$("vrmState").classList.add("bad");log(e.message)}
+
+const V=(p)=>new THREE.Vector3(p.x,-p.y,-p.z), mid=(a,b)=>a.clone().add(b).multiplyScalar(.5);
+const bone=(n)=>vrm?.humanoid?.getNormalizedBoneNode(n);
+const rest=new Map();
+function remember(n){let b=bone(n);if(b&&!rest.has(n))rest.set(n,b.quaternion.clone())}
+["leftUpperArm","leftLowerArm","rightUpperArm","rightLowerArm","leftUpperLeg","leftLowerLeg","rightUpperLeg","rightLowerLeg","spine","chest"].forEach(remember);
+
+function worldDirToParentLocal(b,dir){
+ const q=new THREE.Quaternion();b.parent.getWorldQuaternion(q);return dir.clone().applyQuaternion(q.invert()).normalize()
+}
+function solveBone(name,from,to,localAxis,alpha=.35){
+ let b=bone(name);if(!b)return;remember(name);
+ let d=to.clone().sub(from);if(d.lengthSq()<1e-6)return;
+ d=worldDirToParentLocal(b,d);
+ let base=localAxis.clone().normalize();
+ let target=new THREE.Quaternion().setFromUnitVectors(base,d);
+ let q=rest.get(name).clone().premultiply(target);
+ if(Number.isFinite(q.x+q.y+q.z+q.w)) b.quaternion.slerp(q,alpha);
+}
+// Normalized VRM humanoids are in T-pose: arms extend sideways; legs descend.
+const AX={
+ leftUpperArm:new THREE.Vector3(1,0,0), leftLowerArm:new THREE.Vector3(1,0,0),
+ rightUpperArm:new THREE.Vector3(-1,0,0), rightLowerArm:new THREE.Vector3(-1,0,0),
+ leftUpperLeg:new THREE.Vector3(0,-1,0),leftLowerLeg:new THREE.Vector3(0,-1,0),
+ rightUpperLeg:new THREE.Vector3(0,-1,0),rightLowerLeg:new THREE.Vector3(0,-1,0)
+};
+function solveBody(w){
+ if(!vrm||!w||w.length<33)return;
+ let p=w.map(V);
+ solveBone("leftUpperArm",p[11],p[13],AX.leftUpperArm,.32);
+ solveBone("leftLowerArm",p[13],p[15],AX.leftLowerArm,.38);
+ solveBone("rightUpperArm",p[12],p[14],AX.rightUpperArm,.32);
+ solveBone("rightLowerArm",p[14],p[16],AX.rightLowerArm,.38);
+ solveBone("leftUpperLeg",p[23],p[25],AX.leftUpperLeg,.28);
+ solveBone("leftLowerLeg",p[25],p[27],AX.leftLowerLeg,.34);
+ solveBone("rightUpperLeg",p[24],p[26],AX.rightUpperLeg,.28);
+ solveBone("rightLowerLeg",p[26],p[28],AX.rightLowerLeg,.34);
+ // Torso: only lean from hip-center to shoulder-center; no yaw/roll yet = avoids 180° flips.
+ let hc=mid(p[23],p[24]),sc=mid(p[11],p[12]),up=sc.clone().sub(hc).normalize();
+ let spine=bone("spine"); if(spine){remember("spine");let local=worldDirToParentLocal(spine,up);let tq=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),local);let q=rest.get("spine").clone().premultiply(tq);spine.quaternion.slerp(q,.16)}
+ vrm.humanoid.update();
+}
+const EDGES=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[27,31],[24,26],[26,28],[28,32]];
+function drawRaw(lm){
+ resize();ctx.clearRect(0,0,overlay.width,overlay.height);let w=overlay.width,h=overlay.height;ctx.strokeStyle="#4cff98";ctx.fillStyle="#4cff98";ctx.lineWidth=3*devicePixelRatio;
+ for(let [a,b] of EDGES){if(!lm[a]||!lm[b])continue;ctx.beginPath();ctx.moveTo(lm[a].x*w,lm[a].y*h);ctx.lineTo(lm[b].x*w,lm[b].y*h);ctx.stroke()}
+ for(let i of [11,12,13,14,15,16,23,24,25,26,27,28,31,32]){let p=lm[i];ctx.beginPath();ctx.arc(p.x*w,p.y*h,4*devicePixelRatio,0,Math.PI*2);ctx.fill()}
+}
+const pose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${f}`});
+pose.setOptions({modelComplexity:2,smoothLandmarks:true,enableSegmentation:false,minDetectionConfidence:.55,minTrackingConfidence:.55});
+pose.onResults(r=>{busy=false;if(!running)return;if(r.poseLandmarks&&r.poseWorldLandmarks){$("poseState").textContent="POSE OK";$("poseState").classList.add("ok");drawRaw(r.poseLandmarks);solveBody(r.poseWorldLandmarks);frames++}});
+async function pump(){if(!running)return;if(!busy&&video.readyState>=2){busy=true;try{await pose.send({image:video})}catch(e){busy=false;log("Pose: "+e.message)}}requestAnimationFrame(pump)}
+$("start").onclick=async()=>{try{if(!stream){stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:960},height:{ideal:1280}},audio:false});video.srcObject=stream;await video.play()}$("cam").textContent="CAM OK";$("cam").classList.add("ok");running=true;pump()}catch(e){$("cam").textContent="CAM ERRORE";$("cam").classList.add("bad");log(e.message)}};
+$("stop").onclick=()=>running=false;
+const clock=new THREE.Clock();function render(){requestAnimationFrame(render);controls.update();if(vrm)vrm.update(clock.getDelta());renderer.render(scene,camera);let n=performance.now();if(n-fpsT>1000){$("fps").textContent=`FPS POSE ${frames}`;frames=0;fpsT=n}}render();
+</script></body></html>
