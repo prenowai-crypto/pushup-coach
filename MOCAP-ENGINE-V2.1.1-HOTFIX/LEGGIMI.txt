@@ -1,0 +1,29 @@
+MOCAP ENGINE V2.1.1 — HOTFIX
+
+BUG CORRETTO
+Errore visto nello screenshot:
+Cannot read properties of null (reading 'checked')
+
+Il renderer interrogava direttamente .checked sui controlli UI.
+Se GitHub Pages/browser serviva una shell HTML precedente o un file veniva
+caricato nella vecchia cartella, il loop Pose andava in errore a ogni frame
+e il pannello destro restava nero.
+
+CORREZIONE
+- accesso robusto ai checkbox con fallback;
+- BUILD 2.1.1 visibile nella toolbar;
+- firma "BUILD 2.1.1 HOTFIX caricato" nel log;
+- tracking V2 e geometria camera-space NON modificati;
+- nessuna modifica a posizione, scala, crop o logica del Digital Twin.
+
+IMPORTANTE
+Nello screenshot l'URL era:
+.../pushup-coach/MOCAP-ENGINE-V1/
+
+Per evitare cache/cartelle vecchie, caricare questa versione in una NUOVA cartella:
+MOCAP-ENGINE-V2.1.1-HOTFIX
+
+e aprire:
+https://prenowai-crypto.github.io/pushup-coach/MOCAP-ENGINE-V2.1.1-HOTFIX/
+
+Se vedi BUILD 2.1.1 nella toolbar, stai eseguendo sicuramente il file corretto.
