@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MOCAP ENGINE V5 · Wireframe Human</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#071019;color:#eef5f8;font:14px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:14px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:#9db0bd;margin-bottom:10px}
+.toolbar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:10px}
+button{border:0;border-radius:9px;padding:10px 13px;font-weight:800;background:#244157;color:#fff;cursor:pointer}
+button.go{background:#43d48d;color:#06120c}button.stop{background:#e66e6e;color:#1a0707}
+.chip{padding:6px 9px;border-radius:8px;background:#142535;font:700 12px ui-monospace,monospace}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:#101a24;border:1px solid #263a49;border-radius:14px;padding:10px;min-width:0}
+.card h2{font-size:14px;margin:0 0 8px;color:#d6e3ea}
+.stage{position:relative;aspect-ratio:4/3;min-height:330px;overflow:hidden;border-radius:10px;background:#000}
+video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mirror{transform:scaleX(-1)}
+#threeHost{position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,#16293a 0%,#0d1622 42%,#071019 78%)}
+#threeHost canvas{display:block}
+.diag{margin-top:10px;background:#071019;border:1px solid #2c475c;border-radius:10px;padding:10px;font:700 13px ui-monospace,monospace;line-height:1.55}
+.note{margin-top:8px;color:#a7bbc7;font-size:12px;line-height:1.45}
+#log{white-space:pre-wrap;background:#071019;border-radius:10px;padding:9px;max-height:140px;overflow:auto;color:#9eb4c1}
+.good{color:#55dd97}.warn{color:#ffd36a}.bad{color:#ff9393}
+label{display:flex;align-items:center;gap:6px;background:#142535;padding:7px 9px;border-radius:8px;font-weight:700}
+input[type=checkbox]{width:18px;height:18px}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js"></script>
+</head>
+<body>
+<h1>MOCAP ENGINE V5 · WIREFRAME HUMAN</h1>
+<div class="sub">Base V2.1.2 conservata. A destra un umano tecnico 3D in camera-space: niente VRM, niente retargeting, niente camera che si muove.</div>
+
+<div class="toolbar">
+  <button id="start" class="go">AVVIA CAMERA</button>
+  <button id="stop" class="stop">STOP</button>
+  <label><input id="debug" type="checkbox"> DEBUG SKELETON</label>
+  <label><input id="ghost" type="checkbox" checked> GHOST BODY</label>
+  <span id="camState" class="chip">CAM —</span>
+  <span id="poseState" class="chip">POSE —</span>
+  <span id="fpsState" class="chip">FPS —</span>
+  <span class="chip">MODE · WIREFRAME TECH HUMAN</span>
+</div>
+
+<div class="grid">
+  <section class="card">
+    <h2>CAMERA + RAW LANDMARK</h2>
+    <div class="stage">
+      <video id="video" class="mirror" playsinline autoplay muted></video>
+      <canvas id="overlay" class="mirror"></canvas>
+    </div>
+    <div class="diag" id="diag">HEAD —<br>CORE —<br>LOWER —<br>MODE —</div>
+    <div class="note">La vista di sinistra è il master: coordinate camera-space della V2.1.2, senza reinterpretazioni della posa.</div>
+  </section>
+
+  <section class="card">
+    <h2>HUMAN 3D · CAMERA-SPACE WIREFRAME</h2>
+    <div class="stage">
+      <div id="threeHost" class="mirror"></div>
+    </div>
+    <div class="note">L’umano 3D resta nello stesso frame del video. Testa, tronco, bacino e arti sono costruiti direttamente sui landmark 2D+3D disponibili.</div>
+  </section>
+</div>
+
+<pre id="log">BUILD V5 caricato. Premi AVVIA CAMERA.</pre>
+
+<script type="module">
+import * as THREE from "three";
+
+const $=id=>document.getElementById(id);
+const video=$("video"), overlay=$("overlay"), ctx=overlay.getContext("2d"), host=$("threeHost");
+const log=s=>{$("log").textContent=s+"\n"+$("log").textContent.slice(0,2400)};
+
+const EDGES=[
+ [0,2],[2,7],[0,5],[5,8],
+ [11,12],[11,13],[13,15],[15,17],[15,19],[15,21],
+ [12,14],[14,16],[16,18],[16,20],[16,22],
+ [11,23],[12,24],[23,24],
+ [23,25],[25,27],[27,29],[29,31],
+ [24,26],[26,28],[28,30],[30,32]
+];
+
+let stream=null,running=false,busy=false,lastVideoTime=-1,fpsN=0,fpsT=performance.now(),aspect=4/3;
+
+function fitOverlay(){
+  const w=video.videoWidth||960,h=video.videoHeight||720;
+  if(overlay.width!==w||overlay.height!==h){overlay.width=w;overlay.height=h}
+  resizeThree(w,h);
+}
+function P(lm,i,w,h){
+  const p=lm?.[i];
+  return p?{x:p.x*w,y:p.y*h,z:p.z||0,v:p.visibility??0}:null;
+}
+function drawRaw(lm){
+  fitOverlay();const w=overlay.width,h=overlay.height;
+  ctx.clearRect(0,0,w,h);if(!lm)return;
+  ctx.lineCap="round";ctx.lineJoin="round";
+  for(const [a,b] of EDGES){
+    const A=P(lm,a,w,h),B=P(lm,b,w,h);if(!A||!B)continue;
+    const c=Math.min(A.v,B.v);
+    ctx.strokeStyle=c>.6?"#42e79a":c>.32?"#ffd360":"#ff7a7a";
+    ctx.globalAlpha=Math.max(.16,c);ctx.lineWidth=Math.max(2,w*.004);
+    ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.stroke();
+  }
+  for(let i=0;i<33;i++){
+    const p=P(lm,i,w,h);if(!p)continue;
+    const c=p.v;ctx.fillStyle=c>.6?"#62f0a9":c>.32?"#ffe071":"#ff8181";
+    ctx.globalAlpha=Math.max(.18,c);ctx.beginPath();ctx.arc(p.x,p.y,i<=10?w*.006:w*.0045,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+// ---------------- Three scene ----------------
+const scene=new THREE.Scene();
+const camera=new THREE.OrthographicCamera(-aspect/2,aspect/2,.5,-.5,.01,20);
+camera.position.set(0,0,4);camera.lookAt(0,0,0);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setClearColor(0x000000,0);
+host.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xcfe9ff,0x091019,2.4));
+const key=new THREE.DirectionalLight(0xffffff,1.8);key.position.set(-2,4,5);scene.add(key);
+const rim=new THREE.DirectionalLight(0x8fd8ff,1.7);rim.position.set(3,1,2);scene.add(rim);
+const fill=new THREE.DirectionalLight(0x7dc8ff,0.8);fill.position.set(0,-1,2);scene.add(fill);
+
+const human=new THREE.Group();scene.add(human);
+const ghostGroup=new THREE.Group();scene.add(ghostGroup);
+
+function resizeThree(w=video.videoWidth||960,h=video.videoHeight||720){
+  aspect=w/Math.max(1,h);
+  camera.left=-aspect/2;camera.right=aspect/2;camera.top=.5;camera.bottom=-.5;camera.updateProjectionMatrix();
+  renderer.setSize(host.clientWidth||w,host.clientHeight||h,false);
+}
+addEventListener("resize",()=>resizeThree());
+
+// materials
+const fillMat=new THREE.MeshPhysicalMaterial({color:0xcfd7df,roughness:.54,metalness:.12,transparent:true,opacity:.22,side:THREE.DoubleSide});
+const fillDark=new THREE.MeshPhysicalMaterial({color:0xa6b5c3,roughness:.6,metalness:.15,transparent:true,opacity:.18,side:THREE.DoubleSide});
+const lineMat=new THREE.LineBasicMaterial({color:0xe5edf5,transparent:true,opacity:.95});
+const ghostMat=new THREE.LineBasicMaterial({color:0x6de0ff,transparent:true,opacity:.18});
+
+function makePart(geo, fill=fillMat){
+  const g=new THREE.Group();
+  const mesh=new THREE.Mesh(geo,fill.clone());
+  const wire=new THREE.LineSegments(new THREE.WireframeGeometry(geo),lineMat.clone());
+  g.add(mesh,wire); g.mesh=mesh; g.wire=wire; human.add(g); return g;
+}
+function makeGhostLine(){
+  const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]);
+  const l=new THREE.Line(geo,ghostMat.clone()); ghostGroup.add(l); return l;
+}
+
+const sphereGeo=new THREE.SphereGeometry(1,24,18);
+const torsoGeo=new THREE.SphereGeometry(1,26,20);
+const headGeo=new THREE.SphereGeometry(1,28,22);
+const upperArmGeo=new THREE.CylinderGeometry(.82,.98,1,18,1,false);
+const lowerArmGeo=new THREE.CylinderGeometry(.70,.86,1,18,1,false);
+const upperLegGeo=new THREE.CylinderGeometry(.84,1.05,1,20,1,false);
+const lowerLegGeo=new THREE.CylinderGeometry(.70,.88,1,20,1,false);
+const neckGeo=new THREE.CylinderGeometry(.72,.9,1,18,1,false);
+const handGeo=new THREE.SphereGeometry(1,18,14);
+const footGeo=new THREE.SphereGeometry(1,18,12);
+
+const parts={
+  head:makePart(headGeo), neck:makePart(neckGeo),
+  chest:makePart(torsoGeo), abdomen:makePart(torsoGeo,fillDark), pelvis:makePart(torsoGeo,fillDark),
+  lUA:makePart(upperArmGeo), lLA:makePart(lowerArmGeo), rUA:makePart(upperArmGeo), rLA:makePart(lowerArmGeo),
+  lThigh:makePart(upperLegGeo,fillDark), lShin:makePart(lowerLegGeo,fillDark), rThigh:makePart(upperLegGeo,fillDark), rShin:makePart(lowerLegGeo,fillDark),
+  lHand:makePart(handGeo), rHand:makePart(handGeo), lFoot:makePart(footGeo,fillDark), rFoot:makePart(footGeo,fillDark)
+};
+
+const debugGroup=new THREE.Group();scene.add(debugGroup);
+const debugLineMat=new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.75});
+const debugLines=[];
+for(const [a,b] of EDGES){
+  const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]);
+  const l=new THREE.Line(g,debugLineMat);debugGroup.add(l);debugLines.push({a,b,l});
+}
+const ghostLines=[];
+for(const [a,b] of EDGES) ghostLines.push({a,b,l:makeGhostLine()});
+
+function midpoint3(a,b){return a.clone().add(b).multiplyScalar(.5)}
+function len3(a,b){return a.distanceTo(b)}
+function usable(j,t=.30){return !!j&&j.v>=t}
+function hidePart(obj){obj.visible=false}
+function setPartAlpha(obj,a=.22){obj.mesh.material.opacity=a; obj.wire.material.opacity=Math.min(1,a*3.8+.15)}
+
+function segment(obj,a,b,r,alpha=.22){
+  if(!a||!b){hidePart(obj);return}
+  const d=new THREE.Vector3().subVectors(b,a),L=d.length();
+  if(L<.002){hidePart(obj);return}
+  obj.visible=true; obj.position.copy(a).add(b).multiplyScalar(.5);
+  obj.scale.set(r,L,r); obj.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()); setPartAlpha(obj,alpha);
+}
+function ellipsoid(obj,pos,sx,sy,sz,alpha=.22,quat=null){
+  if(!pos){hidePart(obj);return}
+  obj.visible=true; obj.position.copy(pos); obj.scale.set(sx,sy,sz); if(quat)obj.quaternion.copy(quat); setPartAlpha(obj,alpha);
+}
+function footPart(obj,A,F,r,alpha=.22){
+  if(!(A&&F)){hidePart(obj);return}
+  const c=midpoint3(A,F),L=len3(A,F),d=F.clone().sub(A);
+  ellipsoid(obj,c,Math.max(r*.95,L*.58),r*.42,r*.62,alpha); obj.quaternion.setFromUnitVectors(new THREE.Vector3(1,0,0),d.normalize());
+}
+
+function J(lm2,lm3,i){
+  const p=lm2?.[i]; if(!p) return null;
+  const z=lm3?.[i] ? -lm3[i].z*.22 : -(p.z||0)*.08;
+  return {p:new THREE.Vector3((p.x-.5)*aspect,.5-p.y,z),v:p.visibility??0};
+}
+
+function torsoBasis(LS,RS,LH,RH){
+  if(!(usable(LS,.25)&&usable(RS,.25))) return null;
+  const shoulderC=midpoint3(LS.p,RS.p);
+  const hipC=usable(LH,.22)&&usable(RH,.22) ? midpoint3(LH.p,RH.p) : shoulderC.clone().add(new THREE.Vector3(0,-.25,0));
+  const xAxis=RS.p.clone().sub(LS.p).normalize();
+  let yAxis=shoulderC.clone().sub(hipC).normalize();
+  let zAxis=new THREE.Vector3().crossVectors(xAxis,yAxis);
+  if(zAxis.lengthSq()<1e-6) zAxis.set(0,0,1); else zAxis.normalize();
+  yAxis=new THREE.Vector3().crossVectors(zAxis,xAxis).normalize();
+  const m=new THREE.Matrix4().makeBasis(xAxis,yAxis,zAxis);
+  return {quat:new THREE.Quaternion().setFromRotationMatrix(m), shoulderC, hipC, xAxis, yAxis, zAxis};
+}
+
+function updateDebug(joints){
+  const debugOn=$("debug").checked;
+  debugGroup.visible=debugOn;
+  ghostGroup.visible=$("ghost").checked;
+  debugLines.forEach(({a,b,l})=>{
+    const A=joints[a],B=joints[b];
+    if(!debugOn || !usable(A,.28)||!usable(B,.28)){l.visible=false;return}
+    l.visible=true; const arr=l.geometry.attributes.position.array;
+    arr[0]=A.p.x;arr[1]=A.p.y;arr[2]=A.p.z+.03; arr[3]=B.p.x;arr[4]=B.p.y;arr[5]=B.p.z+.03;
+    l.geometry.attributes.position.needsUpdate=true;
+  });
+  ghostLines.forEach(({a,b,l})=>{
+    const A=joints[a],B=joints[b];
+    if(!$("ghost").checked || !usable(A,.28)||!usable(B,.28)){l.visible=false;return}
+    l.visible=true; const arr=l.geometry.attributes.position.array;
+    arr[0]=A.p.x;arr[1]=A.p.y;arr[2]=A.p.z-.01; arr[3]=B.p.x;arr[4]=B.p.y;arr[5]=B.p.z-.01;
+    l.geometry.attributes.position.needsUpdate=true;
+  });
+}
+
+function updateHuman(lm2,lm3){
+  const j=Array.from({length:33},(_,i)=>J(lm2,lm3,i));
+  updateDebug(j);
+
+  const LS=j[11],RS=j[12],LE=j[13],RE=j[14],LW=j[15],RW=j[16];
+  const LH=j[23],RH=j[24],LK=j[25],RK=j[26],LA=j[27],RA=j[28],LF=j[31],RF=j[32];
+  const nose=j[0],leye=j[2],reye=j[5],lear=j[7],rear=j[8];
+
+  const shouldersOK=usable(LS,.30)&&usable(RS,.30);
+  const hipsOK=usable(LH,.25)&&usable(RH,.25);
+  const shoulderW=shouldersOK?len3(LS.p,RS.p):.26;
+  const armR=Math.max(.0125,shoulderW*.070), legR=Math.max(.014,shoulderW*.088);
+  const torso=torsoBasis(LS,RS,LH,RH);
+  const shoulderC=torso?.shoulderC||null;
+  const hipC=torso?.hipC||null;
+  const torsoQuat=torso?.quat||null;
+
+  // Head
+  let headC=null, headRX=shoulderW*.155, headRY=shoulderW*.205, headRZ=shoulderW*.145, headQuat=torsoQuat;
+  if(usable(lear,.22)&&usable(rear,.22)){
+    headC=midpoint3(lear.p,rear.p);
+    if(usable(nose,.2)) headC.lerp(nose.p,.24);
+    const earW=len3(lear.p,rear.p);
+    headRX=Math.max(shoulderW*.12, earW*.72); headRY=headRX*1.28; headRZ=headRX*.90;
+    const xAxis=rear.p.clone().sub(lear.p).normalize();
+    let yAxis=torso?.yAxis?.clone() || new THREE.Vector3(0,1,0);
+    let zAxis=new THREE.Vector3().crossVectors(xAxis,yAxis);
+    if(zAxis.lengthSq()<1e-6) zAxis.set(0,0,1); else zAxis.normalize();
+    yAxis=new THREE.Vector3().crossVectors(zAxis,xAxis).normalize();
+    const m=new THREE.Matrix4().makeBasis(xAxis,yAxis,zAxis);
+    headQuat=new THREE.Quaternion().setFromRotationMatrix(m);
+  } else if(usable(nose,.3)) {
+    headC=nose.p.clone().add(new THREE.Vector3(0,shoulderW*.025,0));
+  }
+  ellipsoid(parts.head,headC,headRX,headRY,headRZ,headC?Math.max(.17,nose?.v||.3):0,headQuat);
+
+  // Neck + torso
+  if(headC && shoulderC){
+    const neckTop=headC.clone().add(new THREE.Vector3(0,-headRY*.62,0));
+    const neckBottom=shoulderC.clone().add((torso?.yAxis||new THREE.Vector3(0,1,0)).clone().multiplyScalar(-shoulderW*.03));
+    segment(parts.neck,neckBottom,neckTop,shoulderW*.042,.20);
+  } else hidePart(parts.neck);
+
+  if(shouldersOK){
+    const torsoH=hipC?len3(shoulderC,hipC):shoulderW*.65;
+    const down=(torso?.yAxis||new THREE.Vector3(0,1,0)).clone().multiplyScalar(-1);
+    const chestPos=hipC?shoulderC.clone().lerp(hipC,.30):shoulderC.clone().add(down.clone().multiplyScalar(torsoH*.24));
+    const abdomenPos=hipC?shoulderC.clone().lerp(hipC,.64):shoulderC.clone().add(down.clone().multiplyScalar(torsoH*.56));
+    const pelvisPos=hipC || shoulderC.clone().add(down.clone().multiplyScalar(torsoH*.84));
+    const hipW=hipsOK?len3(LH.p,RH.p):shoulderW*.82;
+    ellipsoid(parts.chest,chestPos,shoulderW*.43,Math.max(.06,torsoH*.34),shoulderW*.18,.18,torsoQuat);
+    ellipsoid(parts.abdomen,abdomenPos,Math.max(hipW*.34,shoulderW*.28),Math.max(.05,torsoH*.25),shoulderW*.155,.16,torsoQuat);
+    ellipsoid(parts.pelvis,pelvisPos,Math.max(hipW*.56,shoulderW*.30),Math.max(.04,torsoH*.15),shoulderW*.17,.17,torsoQuat);
+  } else {hidePart(parts.chest);hidePart(parts.abdomen);hidePart(parts.pelvis);}
+
+  // Arms
+  segment(parts.lUA,usable(LS,.30)&&usable(LE,.30)?LS.p:null,usable(LE,.30)?LE.p:null,armR,.20);
+  segment(parts.lLA,usable(LE,.30)&&usable(LW,.30)?LE.p:null,usable(LW,.30)?LW.p:null,armR*.86,.20);
+  segment(parts.rUA,usable(RS,.30)&&usable(RE,.30)?RS.p:null,usable(RE,.30)?RE.p:null,armR,.20);
+  segment(parts.rLA,usable(RE,.30)&&usable(RW,.30)?RE.p:null,usable(RW,.30)?RW.p:null,armR*.86,.20);
+
+  // Hands with palm tilt from wrist to index/pinky when available
+  function handPart(obj,wrist,index,pinky,rad){
+    if(!usable(wrist,.28)){hidePart(obj);return}
+    let pos=wrist.p.clone(), quat=null;
+    if(usable(index,.18)&&usable(pinky,.18)){
+      const x=index.p.clone().sub(pinky.p).normalize();
+      let y=wrist.p.clone().sub(midpoint3(index.p,pinky.p)).normalize();
+      let z=new THREE.Vector3().crossVectors(x,y); if(z.lengthSq()<1e-6) z.set(0,0,1); else z.normalize();
+      y=new THREE.Vector3().crossVectors(z,x).normalize();
+      quat=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,z));
+      pos=midpoint3(wrist.p,midpoint3(index.p,pinky.p));
+    }
+    ellipsoid(obj,pos,rad*.95,rad*1.2,rad*.52,.19,quat);
+  }
+  handPart(parts.lHand,LW,j[19],j[17],armR);
+  handPart(parts.rHand,RW,j[20],j[18],armR);
+
+  // Legs / feet
+  segment(parts.lThigh,usable(LH,.28)&&usable(LK,.28)?LH.p:null,usable(LK,.28)?LK.p:null,legR,.18);
+  segment(parts.lShin,usable(LK,.28)&&usable(LA,.28)?LK.p:null,usable(LA,.28)?LA.p:null,legR*.78,.18);
+  segment(parts.rThigh,usable(RH,.28)&&usable(RK,.28)?RH.p:null,usable(RK,.28)?RK.p:null,legR,.18);
+  segment(parts.rShin,usable(RK,.28)&&usable(RA,.28)?RK.p:null,usable(RA,.28)?RA.p:null,legR*.78,.18);
+  footPart(parts.lFoot,usable(LA,.25)?LA.p:null,usable(LF,.22)?LF.p:null,legR,.18);
+  footPart(parts.rFoot,usable(RA,.25)?RA.p:null,usable(RF,.22)?RF.p:null,legR,.18);
+}
+
+function diagnostics(lm){
+  const v=i=>lm?.[i]?.visibility??0;
+  const head=Math.max(v(0),v(7),v(8)),core=[11,12,23,24].filter(i=>v(i)>.35).length,lower=[25,26,27,28].filter(i=>v(i)>.35).length;
+  $("diag").innerHTML=
+   `HEAD <span class="${head>.45?"good":head>.25?"warn":"bad"}">${head>.45?"OK":head>.25?"DEBOLE":"PERSA"} ${head.toFixed(2)}</span><br>`+
+   `CORE ${core}/4<br>LOWER ${lower}/4<br>`+
+   `MODE <span class="good">WIREFRAME HUMAN · CAMERA SPACE</span>`;
+}
+
+const pose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${f}`});
+pose.setOptions({
+  modelComplexity:2,
+  smoothLandmarks:true,
+  enableSegmentation:true,
+  smoothSegmentation:true,
+  minDetectionConfidence:.55,
+  minTrackingConfidence:.55
+});
+pose.onResults(r=>{
+  busy=false;
+  if(!r.poseLandmarks){
+    $("poseState").textContent="POSE LOST"; drawRaw(null); return;
+  }
+  $("poseState").textContent="POSE OK";
+  drawRaw(r.poseLandmarks);
+  updateHuman(r.poseLandmarks,r.poseWorldLandmarks);
+  diagnostics(r.poseLandmarks);
+  const now=performance.now(); fpsN++;
+  if(now-fpsT>1000){$("fpsState").textContent=`FPS ${fpsN}`; fpsN=0; fpsT=now}
+});
+
+async function loop(){
+  if(!running)return;
+  if(video.readyState>=2 && video.currentTime!==lastVideoTime && !busy){
+    lastVideoTime=video.currentTime; busy=true;
+    try{await pose.send({image:video})}catch(e){busy=false;log("Pose error: "+e.message)}
+  }
+  requestAnimationFrame(loop);
+}
+
+$("start").onclick=async()=>{
+  if(running)return;
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}},audio:false});
+    video.srcObject=stream; await video.play(); fitOverlay();
+    running=true; $("camState").textContent="CAM OK";
+    log("Camera avviata. V5: tracking V2.1.2 + corpo tecnico wireframe costruito direttamente sui landmark.");
+    loop();
+  }catch(e){$("camState").textContent="CAM ERROR"; log("Camera: "+e.message)}
+};
+$("stop").onclick=()=>{
+  running=false; busy=false; stream?.getTracks().forEach(t=>t.stop()); stream=null; $("camState").textContent="CAM STOP";
+};
+$("ghost").onchange=()=>{ghostGroup.visible=$("ghost").checked};
+(function animate(){requestAnimationFrame(animate); renderer.render(scene,camera)})();
+resizeThree();
+</script>
+</body>
+</html>
