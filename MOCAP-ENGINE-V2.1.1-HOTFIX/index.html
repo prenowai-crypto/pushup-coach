@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MOCAP ENGINE V2.1.2 · Camera-Space Humanoid</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#071019;color:#eef5f8;font:14px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:14px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:#9db0bd;margin-bottom:10px}
+.toolbar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:10px}
+button{border:0;border-radius:9px;padding:10px 13px;font-weight:800;background:#244157;color:#fff}
+button.go{background:#43d48d;color:#06120c}button.stop{background:#e66e6e;color:#1a0707}
+.chip{padding:6px 9px;border-radius:8px;background:#142535;font:700 12px ui-monospace,monospace}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:850px){.grid{grid-template-columns:1fr}}
+.card{background:#101a24;border:1px solid #263a49;border-radius:14px;padding:10px;min-width:0}
+.card h2{font-size:14px;margin:0 0 8px;color:#d6e3ea}
+.stage{position:relative;aspect-ratio:4/3;min-height:320px;overflow:hidden;border-radius:10px;background:#000}
+video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mirror{transform:scaleX(-1)}
+#twin{background:#05090d}
+.diag{margin-top:10px;background:#071019;border:1px solid #2c475c;border-radius:10px;padding:10px;font:700 14px ui-monospace,monospace;line-height:1.55}
+.note{margin-top:8px;color:#a7bbc7;font-size:12px;line-height:1.45}
+#log{white-space:pre-wrap;background:#071019;border-radius:10px;padding:9px;max-height:110px;overflow:auto;color:#9eb4c1}
+.good{color:#55dd97}.warn{color:#ffd36a}.bad{color:#ff7d7d}
+label{display:flex;align-items:center;gap:6px;background:#142535;padding:7px 9px;border-radius:8px;font-weight:700}
+input[type=checkbox]{width:18px;height:18px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js"></script>
+</head>
+<body>
+<h1>MOCAP ENGINE V2.1.2 · CAMERA-SPACE HUMANOID</h1>
+<div class="sub">Tracking V2 congelato. A destra un umanoide semplice veste direttamente gli stessi landmark camera-space.</div>
+
+<div class="toolbar">
+  <button id="start" class="go">AVVIA CAMERA</button>
+  <button id="stop" class="stop">STOP</button>
+  <label><input id="silhouette" type="checkbox" checked> SILHOUETTE CHECK</label>
+  <label><input id="joints" type="checkbox"> LANDMARK</label>
+  <label><input id="ghost" type="checkbox" checked> GHOST SKELETON</label>
+  <span id="camState" class="chip">CAM —</span>
+  <span id="poseState" class="chip">POSE —</span>
+  <span id="fpsState" class="chip">FPS —</span>
+  <span class="chip">CAMERA SPACE · NO ROOT</span>
+</div>
+
+<div class="grid">
+  <section class="card">
+    <h2>CAMERA + RAW LANDMARK</h2>
+    <div class="stage">
+      <video id="video" class="mirror" playsinline autoplay muted></video>
+      <canvas id="overlay" class="mirror"></canvas>
+    </div>
+    <div class="diag" id="diag">
+      HEAD —<br>
+      BODY VISIBLE —<br>
+      CROP —<br>
+      TRACKING —
+    </div>
+    <div class="note">
+      Il video è specchiato come una normale selfie camera. I landmark sono disegnati nello stesso identico frame.
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>CAMERA-SPACE HUMANOID · STESSO FRAME</h2>
+    <div class="stage">
+      <canvas id="twin" class="mirror"></canvas>
+    </div>
+    <div class="note">
+      L’umanoide viene costruito direttamente sopra gli stessi <b>x/y di poseLandmarks</b>. Nessuna camera 3D, nessun root, nessun auto-fit. Se una parte non è rilevata, non viene inventata.
+    </div>
+  </section>
+</div>
+
+<pre id="log">BUILD 2.1.2 caricato. Premi AVVIA CAMERA.</pre>
+
+<script>
+const $=id=>document.getElementById(id);
+const video=$("video"), overlay=$("overlay"), twin=$("twin");
+const octx=overlay.getContext("2d"), tctx=twin.getContext("2d");
+const log=s=>{$("log").textContent=s+"\n"+$("log").textContent.slice(0,1600)};
+
+const EDGES=[
+ [0,2],[2,7],[0,5],[5,8],
+ [11,12],[11,13],[13,15],[15,17],[15,19],[15,21],
+ [12,14],[14,16],[16,18],[16,20],[16,22],
+ [11,23],[12,24],[23,24],
+ [23,25],[25,27],[27,29],[29,31],
+ [24,26],[26,28],[28,30],[30,32]
+];
+
+const BODY_SEGMENTS=[
+ [11,13],[13,15],[12,14],[14,16],
+ [23,25],[25,27],[24,26],[26,28]
+];
+
+let stream=null,running=false,busy=false,lastVideoTime=-1,fpsN=0,fpsT=performance.now();
+
+function fitCanvases(){
+  const w=video.videoWidth||960,h=video.videoHeight||720;
+  for(const c of [overlay,twin]){
+    if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+  }
+}
+
+function P(lm,i,w,h){
+  const p=lm?.[i];
+  return p?{x:p.x*w,y:p.y*h,z:p.z||0,v:p.visibility??0}:null;
+}
+function mid(a,b){return {x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:(a.z+b.z)/2,v:Math.min(a.v,b.v)}}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function visible(p,thr=.35){
+  return !!p && p.v>=thr && p.x>=-.04 && p.x<=1.04 && p.y>=-.04 && p.y<=1.04;
+}
+
+function drawRaw(lm){
+  fitCanvases();
+  const w=overlay.width,h=overlay.height;
+  octx.clearRect(0,0,w,h);
+  if(!lm)return;
+  octx.lineCap="round";octx.lineJoin="round";
+  for(const [a,b] of EDGES){
+    const A=P(lm,a,w,h),B=P(lm,b,w,h);
+    if(!A||!B)continue;
+    const c=Math.min(A.v,B.v);
+    octx.strokeStyle=c>.6?"#42e79a":c>.32?"#ffd360":"#ff7a7a";
+    octx.globalAlpha=Math.max(.16,c);
+    octx.lineWidth=Math.max(2,w*.004);
+    octx.beginPath();octx.moveTo(A.x,A.y);octx.lineTo(B.x,B.y);octx.stroke();
+  }
+  for(let i=0;i<33;i++){
+    const p=P(lm,i,w,h);if(!p)continue;
+    const c=p.v;
+    octx.fillStyle=c>.6?"#62f0a9":c>.32?"#ffe071":"#ff8181";
+    octx.globalAlpha=Math.max(.18,c);
+    octx.beginPath();octx.arc(p.x,p.y,i<=10?w*.006:w*.0045,0,Math.PI*2);octx.fill();
+  }
+  octx.globalAlpha=1;
+}
+
+function drawCapsule(ctx,a,b,r,fill,alpha=1){
+  if(!a||!b)return;
+  const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);
+  if(len<1)return;
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.translate(a.x,a.y);
+  ctx.rotate(Math.atan2(dy,dx));
+  ctx.fillStyle=fill;
+  ctx.beginPath();
+  ctx.roundRect(0,-r,len,r*2,r);
+  ctx.fill();
+  ctx.restore();
+}
+
+
+function drawJointDisc(ctx,p,r,fill,alpha=1){
+  if(!p)return;
+  ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle=fill;
+  ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();ctx.restore();
+}
+
+function drawTorsoHumanoid(ctx,LSH,RSH,LHIP,RHIP,shoulderW){
+  if(!(LSH&&RSH)) return;
+  if(LSH.v<.3||RSH.v<.3) return;
+  ctx.save();
+  ctx.fillStyle="#327f93";
+  ctx.strokeStyle="#7fe3f1";
+  ctx.lineWidth=Math.max(2,shoulderW*.012);
+  ctx.globalAlpha=.90;
+
+  if(LHIP&&RHIP&&LHIP.v>.28&&RHIP.v>.28){
+    const chest=mid(LSH,RSH), pelvis=mid(LHIP,RHIP);
+    const neck={x:chest.x,y:chest.y-shoulderW*.08};
+    ctx.beginPath();
+    ctx.moveTo(neck.x,neck.y);
+    ctx.lineTo(RSH.x,RSH.y);
+    ctx.lineTo(RHIP.x,RHIP.y);
+    ctx.quadraticCurveTo(pelvis.x,pelvis.y+shoulderW*.06,LHIP.x,LHIP.y);
+    ctx.lineTo(LSH.x,LSH.y);
+    ctx.closePath();
+    ctx.fill();ctx.stroke();
+
+    // simple pelvis plate, still entirely landmark-driven
+    ctx.fillStyle="#286474";
+    ctx.beginPath();
+    ctx.moveTo(LHIP.x,LHIP.y);
+    ctx.lineTo(RHIP.x,RHIP.y);
+    ctx.lineTo(pelvis.x+shoulderW*.16,pelvis.y+shoulderW*.16);
+    ctx.lineTo(pelvis.x-shoulderW*.16,pelvis.y+shoulderW*.16);
+    ctx.closePath();ctx.fill();
+  }else{
+    // only upper body visible: terminate the torso from visible shoulder geometry.
+    const chest=mid(LSH,RSH);
+    const depth=shoulderW*.38;
+    ctx.beginPath();
+    ctx.moveTo(LSH.x,LSH.y);
+    ctx.lineTo(RSH.x,RSH.y);
+    ctx.lineTo(chest.x+shoulderW*.24,chest.y+depth);
+    ctx.lineTo(chest.x-shoulderW*.24,chest.y+depth);
+    ctx.closePath();ctx.fill();ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawLimbHumanoid(ctx,A,B,baseR,isLeg=false){
+  if(!A||!B)return;
+  const c=Math.min(A.v,B.v);
+  if(c<.30)return;
+  const ain=A.x>=0&&A.x<=ctx.canvas.width&&A.y>=0&&A.y<=ctx.canvas.height;
+  const bin=B.x>=0&&B.x<=ctx.canvas.width&&B.y>=0&&B.y<=ctx.canvas.height;
+  if(!ain&&!bin)return;
+
+  // z only affects LOCAL thickness, never global position or scale.
+  const z=(A.z+B.z)*.5;
+  const zScale=Math.max(.82,Math.min(1.18,1-z*.14));
+  const r=baseR*zScale*(isLeg?1.18:1.0);
+  drawCapsule(ctx,A,B,r,c>.55?"#4fc0d4":"#b4a55a",Math.max(.38,c));
+  drawJointDisc(ctx,A,r*.88,c>.55?"#72d7e8":"#d6c873",Math.max(.40,c));
+  drawJointDisc(ctx,B,r*.88,c>.55?"#72d7e8":"#d6c873",Math.max(.40,c));
+}
+
+function drawGhostSkeleton(ctx,lm,w,h){
+  if(document.getElementById("ghost")?.checked === false)return;
+  ctx.save();
+  ctx.lineCap="round";
+  ctx.lineJoin="round";
+  ctx.strokeStyle="rgba(255,255,255,.50)";
+  ctx.fillStyle="rgba(255,255,255,.75)";
+  ctx.lineWidth=Math.max(1.5,w*.0023);
+  for(const [a,b] of EDGES){
+    const A=P(lm,a,w,h),B=P(lm,b,w,h);
+    if(!A||!B||Math.min(A.v,B.v)<.30)continue;
+    const ain=A.x>=0&&A.x<=w&&A.y>=0&&A.y<=h;
+    const bin=B.x>=0&&B.x<=w&&B.y>=0&&B.y<=h;
+    if(!ain&&!bin)continue;
+    ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawHead(ctx,lm,w,h){
+  const nose=P(lm,0,w,h), le=P(lm,7,w,h), re=P(lm,8,w,h),
+        ls=P(lm,11,w,h), rs=P(lm,12,w,h), leye=P(lm,2,w,h), reye=P(lm,5,w,h);
+  if(!nose || nose.v<.35)return;
+
+  let cx=nose.x,cy=nose.y,rx=w*.055,ry=rx*1.25,alpha=Math.max(.35,nose.v);
+  if(le&&re&&le.v>.3&&re.v>.3){
+    cx=(le.x+re.x)/2; cy=(le.y+re.y)/2;
+    rx=Math.max(w*.035,dist(le,re)*.68); ry=rx*1.30;
+  }else if(ls&&rs){
+    rx=Math.max(w*.04,dist(ls,rs)*.18); ry=rx*1.30;
+  }
+
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.fillStyle="#78b7e8";
+  ctx.strokeStyle="#b9def8";
+  ctx.lineWidth=Math.max(2,rx*.06);
+  ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+
+  // facial direction hints from actual face pose landmarks
+  if(leye&&reye&&leye.v>.25&&reye.v>.25){
+    drawJointDisc(ctx,leye,Math.max(2,rx*.055),"#08202c",.9);
+    drawJointDisc(ctx,reye,Math.max(2,rx*.055),"#08202c",.9);
+  }
+  drawJointDisc(ctx,nose,Math.max(2,rx*.045),"#0c3142",.9);
+  ctx.restore();
+}
+function drawTwin(lm,segmentationMask){
+  fitCanvases();
+  const w=twin.width,h=twin.height;
+  tctx.clearRect(0,0,w,h);
+  tctx.fillStyle="#05090d";tctx.fillRect(0,0,w,h);
+  if(!lm)return;
+
+  // Optional silhouette: visual alignment check only; tracking remains landmark-driven.
+  if((document.getElementById("silhouette")?.checked ?? true) && segmentationMask){
+    const temp=document.createElement("canvas");
+    temp.width=w;temp.height=h;
+    const x=temp.getContext("2d");
+    x.drawImage(segmentationMask,0,0,w,h);
+    x.globalCompositeOperation="source-in";
+    x.fillStyle="rgba(46,103,122,.18)";
+    x.fillRect(0,0,w,h);
+    tctx.drawImage(temp,0,0);
+  }
+
+  const pt=i=>P(lm,i,w,h);
+  const LSH=pt(11),RSH=pt(12),LHIP=pt(23),RHIP=pt(24);
+  const shoulderW=(LSH&&RSH)?dist(LSH,RSH):w*.22;
+  const baseR=Math.max(7,shoulderW*.070);
+
+  // Torso first, directly on camera-space landmark geometry.
+  drawTorsoHumanoid(tctx,LSH,RSH,LHIP,RHIP,shoulderW);
+
+  // Legs only when their tracked endpoints exist. No standing fallback.
+  drawLimbHumanoid(tctx,pt(23),pt(25),baseR,true);
+  drawLimbHumanoid(tctx,pt(25),pt(27),baseR*.86,true);
+  drawLimbHumanoid(tctx,pt(24),pt(26),baseR,true);
+  drawLimbHumanoid(tctx,pt(26),pt(28),baseR*.86,true);
+
+  // Feet only when actually visible.
+  drawLimbHumanoid(tctx,pt(27),pt(31),baseR*.46,false);
+  drawLimbHumanoid(tctx,pt(28),pt(32),baseR*.46,false);
+
+  // Arms.
+  drawLimbHumanoid(tctx,pt(11),pt(13),baseR,false);
+  drawLimbHumanoid(tctx,pt(13),pt(15),baseR*.86,false);
+  drawLimbHumanoid(tctx,pt(12),pt(14),baseR,false);
+  drawLimbHumanoid(tctx,pt(14),pt(16),baseR*.86,false);
+
+  // Neck/head.
+  const nose=pt(0);
+  if(nose&&LSH&&RSH && nose.v>.3&&LSH.v>.3&&RSH.v>.3){
+    const chest=mid(LSH,RSH);
+    const neck={x:chest.x,y:chest.y-shoulderW*.07,z:(LSH.z+RSH.z)*.5,v:Math.min(LSH.v,RSH.v)};
+    drawCapsule(tctx,neck,nose,baseR*.45,"#61c7d9",Math.min(nose.v,neck.v));
+  }
+  drawHead(tctx,lm,w,h);
+
+  // Coarse hand fan from Pose landmarks. Again: no invented hand when lost.
+  for(const side of [[15,17,19,21],[16,18,20,22]]){
+    const wrist=pt(side[0]); if(!wrist||wrist.v<.30)continue;
+    const fingers=side.slice(1).map(pt).filter(p=>p&&p.v>.25);
+    drawJointDisc(tctx,wrist,baseR*.60,"#67cede",Math.max(.4,wrist.v));
+    for(const f of fingers) drawCapsule(tctx,wrist,f,Math.max(2.5,baseR*.18),"#67cede",Math.min(wrist.v,f.v));
+  }
+
+  // Exact landmark skeleton overlay helps us verify the humanoid is literally wearing the tracker.
+  drawGhostSkeleton(tctx,lm,w,h);
+
+  if((document.getElementById("joints")?.checked ?? false)){
+    for(let i=0;i<33;i++){
+      const p=pt(i);if(!p||p.v<.25)continue;
+      if(p.x<-w*.04||p.x>w*1.04||p.y<-h*.04||p.y>h*1.04)continue;
+      tctx.fillStyle=p.v>.6?"#f4fff9":"#ffd66b";
+      tctx.globalAlpha=Math.max(.3,p.v);
+      tctx.beginPath();tctx.arc(p.x,p.y,i<=10?4.5:3.3,0,Math.PI*2);tctx.fill();
+    }
+    tctx.globalAlpha=1;
+  }
+}
+function diagnostics(lm){
+  const v=i=>lm?.[i]?.visibility??0;
+  const head=Math.max(v(0),v(7),v(8));
+  const core=[11,12,23,24].filter(i=>v(i)>.35).length;
+  const lower=[25,26,27,28,29,30,31,32].filter(i=>v(i)>.35).length;
+  const outside=lm?lm.filter(p=>p&&(p.x<0||p.x>1||p.y<0||p.y>1)).length:0;
+  $("diag").innerHTML=
+   `HEAD <span class="${head>.45?"good":"warn"}">${head>.45?"OK":"DEBOLE"} ${head.toFixed(2)}</span><br>`+
+   `BODY VISIBLE CORE ${core}/4 · LOWER ${lower}/8<br>`+
+   `CROP ${outside} landmark fuori frame<br>`+
+   `TRACKING <span class="good">HUMANOID ON CAMERA-SPACE</span>`;
+}
+
+const pose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${f}`});
+pose.setOptions({
+  modelComplexity:2,
+  smoothLandmarks:true,
+  enableSegmentation:true,
+  smoothSegmentation:true,
+  minDetectionConfidence:.55,
+  minTrackingConfidence:.55
+});
+pose.onResults(r=>{
+  busy=false;
+  if(!r.poseLandmarks){
+    $("poseState").textContent="POSE LOST";
+    drawRaw(null);drawTwin(null,null);return;
+  }
+  $("poseState").textContent="POSE OK";
+  drawRaw(r.poseLandmarks);
+  drawTwin(r.poseLandmarks,r.segmentationMask);
+  diagnostics(r.poseLandmarks);
+  const now=performance.now();fpsN++;
+  if(now-fpsT>1000){$("fpsState").textContent=`FPS ${fpsN}`;fpsN=0;fpsT=now}
+});
+
+async function loop(){
+  if(!running)return;
+  if(video.readyState>=2 && video.currentTime!==lastVideoTime && !busy){
+    lastVideoTime=video.currentTime;busy=true;
+    try{await pose.send({image:video})}catch(e){busy=false;log("V2.1.2 Pose error: "+e.message)}
+  }
+  requestAnimationFrame(loop);
+}
+$("start").onclick=async()=>{
+  if(running)return;
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}},audio:false
+    });
+    video.srcObject=stream;await video.play();fitCanvases();
+    running=true;$("camState").textContent="CAM OK";
+    log("Camera avviata. V2.1: tracking V2 invariato; l'umanoide veste direttamente i landmark camera-space.");
+    loop();
+  }catch(e){$("camState").textContent="CAM ERROR";log("Camera: "+e.message)}
+};
+$("stop").onclick=()=>{
+  running=false;busy=false;
+  stream?.getTracks().forEach(t=>t.stop());stream=null;
+  $("camState").textContent="CAM STOP";
+};
+window.addEventListener("resize",fitCanvases);
+</script>
+</body>
+</html>
